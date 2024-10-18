@@ -6,6 +6,7 @@ namespace GrandTour
 	{
 		public int x;
 		public int z;
+		public Direction incomingBallDirection;
 
 		public void OnBallVisit()
 		{

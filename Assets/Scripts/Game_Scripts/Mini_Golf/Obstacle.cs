@@ -12,7 +12,7 @@ namespace GrandTour
 			rotation = rotation == Rotation.RightUp ? Rotation.RightDown : Rotation.RightUp;
 		}
 
-		public void SetDirection(Rotation rotation)
+		public void SetRotation(Rotation rotation)
 		{
 			this.rotation = rotation;
 

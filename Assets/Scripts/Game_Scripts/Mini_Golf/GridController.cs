@@ -8,11 +8,17 @@ namespace GrandTour
 		public static GridController instance;
 
 		[Header("Grid Settings")]
-		public int gridWidth = 5;
-		public int gridHeight = 5;
+		public int gridWidth;
+		public int gridHeight;
 		public Block[,] grid;
+		[SerializeField] private List<Block> path = new List<Block>();
+		[SerializeField] private int obstacleCount;
+		[SerializeField] private int pipeCount;
 		[SerializeField] private float tileSize = 1.0f;
+		[SerializeField] private List<Color> pipeColors = new List<Color>();
 		private Ball spawnedBall;
+		private int lastIndex;
+		private List<Block> destroyList = new List<Block>();
 
 		[Header("Models")]
 		[SerializeField] private Ball ball;
@@ -41,8 +47,44 @@ namespace GrandTour
 		public void CreateGrid()
 		{
 			InitializeGrid();
-			DisableCorners();
 			ChooseBallSpawnPoint();
+			CalculateBallPath();
+			SpawnObstacles(obstacleCount);
+			SpawnPipes(pipeCount);
+			DisableCorners();
+		}
+
+		public void DeleteGrid()
+		{
+			for (var i = 0; i < gridWidth; i++)
+			{
+				for (var j = 0; j < gridHeight; j++)
+				{
+					targetGroup.RemoveMember(grid[i, j].transform);
+					Destroy(grid[i, j].gameObject);
+				}
+			}
+
+			for (int i = 0; i < transform.childCount; i++)
+			{
+				Destroy(transform.GetChild(i).gameObject);
+			}
+
+			for (int i = 0; i < destroyList.Count; i++)
+			{
+				if (destroyList[i] == null) continue;
+
+				Destroy(destroyList[i].gameObject);
+			}
+
+			destroyList.Clear();
+			Hole.isFlagSet = false;
+			grid = null;
+			path.Clear();
+			lastIndex = 0;
+			Destroy(spawnedBall.gameObject);
+
+			CreateGrid();
 		}
 
 		private void InitializeGrid()
@@ -79,40 +121,205 @@ namespace GrandTour
 				xPos += tileSize;
 				zPos = 0;
 			}
+		}
 
-			//obstacle
-			Block n = grid[5, 3];
-			Vector3 pos = n.transform.position;
-			Destroy(n.gameObject);
-			n = Instantiate(obstacle, transform);
-			grid[5, 3] = n;
-			n.transform.position = pos;
+		private void SpawnObstacles(int obstacleCount)
+		{
+			for (int i = 0; i < obstacleCount; i++)
+			{
+				Block b = GetPathBlock();
+				destroyList.Add(b);
 
-			//first pipe
-			n = grid[1, 3];
-			pos = n.transform.position;
-			Destroy(n.gameObject);
-			n = Instantiate(pipe, transform);
-			grid[1, 3] = n;
-			n.x = 1;
-			n.z = 3;
-			Pipe p1 = n.GetComponent<Pipe>();
-			p1.SetLookingDirection(Direction.RIGHT);
-			n.transform.position = pos;
+				// if not available then delete grid
+				if (!b.gameObject.activeSelf)
+				{
+					DeleteGrid();
+					return;
+				}
 
-			//second pipe
-			n = grid[5, 1];
-			pos = n.transform.position;
-			Destroy(n.gameObject);
-			n = Instantiate(pipe, transform);
-			grid[5, 1] = n;
-			n.x = 5;
-			n.z = 1;
-			Pipe p2 = n.GetComponent<Pipe>();
-			p2.SetLookingDirection(Direction.UP);
+				SetObstacle(b.x, b.z, (Rotation)Random.Range(0, 2));
+				CalculateBallPath();
+			}
+		}
+
+		private void SpawnPipes(int pipeCount)
+		{
+			for (int i = 0; i < pipeCount; i++)
+			{
+				Block b1 = GetPathBlock();
+				destroyList.Add(b1);
+
+				// if not available then delete grid
+				if (!b1.gameObject.activeSelf)
+				{
+					DeleteGrid();
+					return;
+				}
+
+				Pipe p1 = SetPipe(b1.x, b1.z, GetOppositeDirection(b1.incomingBallDirection), pipeColors[i]);
+				destroyList.Add(p1);
+
+				Block b2 = GetPathBlock();
+				destroyList.Add(b2);
+
+				// if not available then delete grid
+				if (!b2.gameObject.activeSelf)
+				{
+					DeleteGrid();
+					return;
+				}
+
+				Pipe p2 = SetPipe(b2.x, b2.z, (Direction)Random.Range(0, 4), pipeColors[i]);
+				destroyList.Add(p2);
+
+				ConnectPipes(p1, p2);
+
+				CalculateBallPath();
+			}
+		}
+
+		private Block GetRandomBlock()
+		{
+			int x;
+			int z;
+
+			do
+			{
+				x = Random.Range(1, gridWidth - 2);
+				z = Random.Range(1, gridHeight - 2);
+			} while (grid[x, z].TryGetComponent(out Obstacle o) || grid[x, z].TryGetComponent(out Pipe p));
+
+			return grid[x, z];
+		}
+
+		private Block GetPathBlock()
+		{
+			int randIdx;
+			int tries = 0;
+			do
+			{
+				if (++tries > 10 || lastIndex + 1 >= path.Count)
+				{
+					GameObject g = new GameObject();
+					g.AddComponent<Block>();
+					g.SetActive(false);
+					return g.GetComponent<Block>();
+				}
+
+				randIdx = Random.Range(lastIndex + 1, path.Count);
+
+			} while (path[randIdx].TryGetComponent(out Obstacle o) || path[randIdx].TryGetComponent(out Pipe p)
+			|| path[randIdx].x <= 0 || path[randIdx].z <= 0 || path[randIdx].x >= gridWidth - 1 || path[randIdx].z >= gridHeight - 1);
+
+			lastIndex = randIdx;
+			return path[randIdx];
+		}
+
+		private void CalculateBallPath()
+		{
+			int tries = 0;
+			path.Clear();
+
+			Ball tempBall = Instantiate(ball, transform);
+			tempBall.SetMeshRendererState(false);
+			tempBall.x = spawnedBall.x;
+			tempBall.z = spawnedBall.z;
+			tempBall.SetGridController(this);
+			tempBall.DecideOnDirection();
+
+			do
+			{
+				grid[tempBall.x, tempBall.z].incomingBallDirection = tempBall.direction;
+				path.Add(grid[tempBall.x, tempBall.z]);
+
+				// Move ball in the chosen direction
+				switch (tempBall.direction)
+				{
+					case Direction.UP:
+						tempBall.z++;
+						break;
+					case Direction.DOWN:
+						tempBall.z--;
+						break;
+					case Direction.LEFT:
+						tempBall.x--;
+						break;
+					case Direction.RIGHT:
+						tempBall.x++;
+						break;
+				}
+
+				// break if OOB
+				if (tempBall.x < 0 || tempBall.z < 0 || tempBall.x >= gridWidth || tempBall.z >= gridHeight)
+					break;
+
+				if (grid[tempBall.x, tempBall.z].TryGetComponent(out Obstacle o))
+				{
+					tempBall.direction = o.GetDirection(tempBall.direction);
+					continue;
+				}
+
+				if (grid[tempBall.x, tempBall.z].TryGetComponent(out Pipe p))
+				{
+					if (p.enterDirection == tempBall.direction)
+					{
+						p.BallEnter(tempBall);
+						continue;
+					}
+				}
+
+				if (++tries >= 100 || (tempBall.x == spawnedBall.x && tempBall.z == spawnedBall.z))
+				{
+					Debug.LogError("Failed to find path");
+					DeleteGrid();
+					return;
+				}
+
+			} while (tempBall.x >= 0 && tempBall.z >= 0 && tempBall.x < gridWidth && tempBall.z < gridHeight);
+
+			Debug.Log("Path ends at: [" + path[^1].x + " " + path[^1].z + "]");
+			Destroy(tempBall.gameObject);
+		}
+
+		private void SetObstacle(int x, int z, Rotation rot)
+		{
+			// Get and delete existing block
+			Block block = grid[x, z];
+			Vector3 pos = block.transform.position;
+			Destroy(block.gameObject);
+
+			// Replace with obstacle
+			Obstacle o = Instantiate(obstacle, transform);
+			grid[x, z] = o;
+			o.x = x;
+			o.z = z;
+			o.transform.position = pos;
+			o.SetRotation(rot);
+		}
+
+		private Pipe SetPipe(int x, int z, Direction dir, Color color)
+		{
+			// Get and delete existing block
+			Block block = grid[x, z];
+			Vector3 pos = block.transform.position;
+			Destroy(block.gameObject);
+
+			// Replace with pipe
+			Pipe p = Instantiate(pipe, transform);
+			grid[x, z] = p;
+			p.x = x;
+			p.z = z;
+			p.transform.position = pos;
+			p.SetLookingDirection(dir);
+			p.SetColor(color);
+
+			return p;
+		}
+
+		private void ConnectPipes(Pipe p1, Pipe p2)
+		{
 			p1.SetExitPipe(p2);
 			p2.SetExitPipe(p1);
-			n.transform.position = pos;
 		}
 
 		private void DisableCorners()
@@ -173,6 +380,22 @@ namespace GrandTour
 
 			spawnedBall.x = x;
 			spawnedBall.z = z;
+
+			spawnedBall.SetGridController(this);
+		}
+
+		private Direction GetOppositeDirection(Direction d)
+		{
+			if (d == Direction.UP)
+				return Direction.DOWN;
+			if (d == Direction.DOWN)
+				return Direction.UP;
+			if (d == Direction.LEFT)
+				return Direction.RIGHT;
+			if (d == Direction.RIGHT)
+				return Direction.LEFT;
+
+			return d;
 		}
 	}
 }

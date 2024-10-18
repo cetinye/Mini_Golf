@@ -1,9 +1,11 @@
+using System;
 using UnityEngine;
 
 namespace GrandTour
 {
 	public class Hole : Block, IClickable
 	{
+		public static Action FlagPlaced;
 		public static bool isFlagSet = false;
 		[SerializeField] private GameObject flagPref;
 
@@ -12,7 +14,10 @@ namespace GrandTour
 			if (isFlagSet) return;
 
 			isFlagSet = true;
+			Debug.Log("Clicked Hole [" + x + " " + z + "]");
 			Instantiate(flagPref, transform);
+
+			FlagPlaced?.Invoke();
 		}
 	}
 }

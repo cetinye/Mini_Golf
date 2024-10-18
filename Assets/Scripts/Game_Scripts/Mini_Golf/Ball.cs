@@ -21,9 +21,23 @@ namespace GrandTour
 			meshRenderer = GetComponentInChildren<MeshRenderer>();
 		}
 
-		private void Start()
+		public void SetGridController(GridController gridController)
 		{
-			gridController = GridController.instance;
+			this.gridController = gridController;
+		}
+
+		void OnEnable()
+		{
+			Hole.FlagPlaced += OnFlagPlaced;
+		}
+
+		void OnDisable()
+		{
+			Hole.FlagPlaced -= OnFlagPlaced;
+		}
+
+		void OnFlagPlaced()
+		{
 			StartCoroutine(Move());
 		}
 
@@ -43,6 +57,14 @@ namespace GrandTour
 
 			gridController.grid[x, z].OnBallVisit();
 
+			if (x == 0 || z == 0 || x == gridController.gridWidth - 1 || z == gridController.gridHeight - 1)
+			{
+				Debug.Log("Ball reached end of grid");
+				Tween t = transform.DOMoveY(0, 0.5f);
+				yield return t.WaitForCompletion();
+				yield break;
+			}
+
 			// Check for obstacles or pipes
 			if (gridController.grid[x, z].TryGetComponent(out Obstacle obstacle))
 			{
@@ -52,21 +74,30 @@ namespace GrandTour
 			{
 				pipe.BallEnter(this);
 
-				var material = meshRenderer.materials[0];
 				// Fade the ball out and in
-				material.DOColor(new Color(1, 1, 1, 0), fadeDuration);
+				FadeBall(0, fadeDuration);
+				SetMeshRendererState(false);
 				SetBallPosition(x, z);
-				yield return new WaitForSeconds(0.5f);
-
-				material.DOColor(new Color(1, 1, 1, 1), fadeDuration);
-				yield return new WaitForSeconds(0.5f);
+				yield return new WaitForSeconds(1f);
+				SetMeshRendererState(true);
+				FadeBall(1, fadeDuration);
 			}
 
 			// Recursively call Move
 			yield return Move();
 		}
 
-		private void DecideOnDirection()
+		public void SetMeshRendererState(bool state)
+		{
+			meshRenderer.enabled = state;
+		}
+
+		public Tween FadeBall(float val, float duration)
+		{
+			return meshRenderer.materials[0].DOColor(new Color(1, 1, 1, val), duration);
+		}
+
+		public void DecideOnDirection()
 		{
 			// Determine the direction based on ball position within grid bounds
 			if (x == 0 && z != 0)
