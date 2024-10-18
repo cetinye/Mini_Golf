@@ -6,5 +6,10 @@ namespace GrandTour
 	{
 		public int x;
 		public int z;
+
+		public void OnBallVisit()
+		{
+			Debug.Log("Ball Visited [" + x + " " + z + "]");
+		}
 	}
 }
