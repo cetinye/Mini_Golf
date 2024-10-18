@@ -19,7 +19,7 @@ namespace GrandTour
 		[SerializeField] private Obstacle obstacle;
 		[SerializeField] private List<GameObject> tree = new List<GameObject>();
 		[SerializeField] private Block ballStart;
-		[SerializeField] private GameObject pipe;
+		[SerializeField] private Pipe pipe;
 		[SerializeField] private GameObject flag;
 		[SerializeField] private Block flat;
 
@@ -89,6 +89,30 @@ namespace GrandTour
 			Destroy(n.gameObject);
 			n = Instantiate(obstacle, transform);
 			grid[5, 3] = n;
+			n.transform.position = pos;
+
+			n = grid[1, 3];
+			pos = n.transform.position;
+			Destroy(n.gameObject);
+			n = Instantiate(pipe, transform);
+			grid[1, 3] = n;
+			n.x = 1;
+			n.z = 3;
+			Pipe p1 = n.GetComponent<Pipe>();
+			p1.SetLookingDirection(Direction.RIGHT);
+			n.transform.position = pos;
+
+			n = grid[5, 1];
+			pos = n.transform.position;
+			Destroy(n.gameObject);
+			n = Instantiate(pipe, transform);
+			grid[5, 1] = n;
+			n.x = 5;
+			n.z = 1;
+			Pipe p2 = n.GetComponent<Pipe>();
+			p2.SetLookingDirection(Direction.UP);
+			p1.SetExitPipe(p2);
+			p2.SetExitPipe(p1);
 			n.transform.position = pos;
 		}
 

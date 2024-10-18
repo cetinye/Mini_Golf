@@ -12,6 +12,16 @@ namespace GrandTour
 			rotation = rotation == Rotation.RightUp ? Rotation.RightDown : Rotation.RightUp;
 		}
 
+		public void SetDirection(Rotation rotation)
+		{
+			this.rotation = rotation;
+
+			if (rotation == Rotation.RightUp)
+				transform.rotation = Quaternion.Euler(0, 90, 0);
+			else if (rotation == Rotation.RightDown)
+				transform.rotation = Quaternion.Euler(0, 0, 0);
+		}
+
 		public Direction GetDirection(Direction incomingDirection)
 		{
 			if (rotation == Rotation.RightDown)
