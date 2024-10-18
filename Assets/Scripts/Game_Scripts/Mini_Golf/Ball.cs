@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using DG.Tweening;
 using UnityEngine;
@@ -11,34 +10,75 @@ namespace GrandTour
 		public int z;
 
 		public Direction direction = Direction.UP;
-		public float moveTime;
-		public float timeToFade;
+		public float moveDuration;
+		public float fadeDuration;
 
 		private MeshRenderer meshRenderer;
 		private GridController gridController;
 
-		void Awake()
+		private void Awake()
 		{
 			meshRenderer = GetComponentInChildren<MeshRenderer>();
 		}
 
-		void Start()
+		private void Start()
 		{
 			gridController = GridController.instance;
 			StartCoroutine(Move());
 		}
 
-		IEnumerator Move()
+		private IEnumerator Move()
 		{
+			DecideOnDirection();
+
+			Vector3 targetPosition = new Vector3(
+				gridController.grid[x, z].transform.position.x,
+				transform.position.y,
+				gridController.grid[x, z].transform.position.z
+			);
+
+			// Move the ball using DOTween
+			Tween movementTween = transform.DOMove(targetPosition, moveDuration).SetEase(Ease.Linear);
+			yield return movementTween.WaitForCompletion();
+
+			gridController.grid[x, z].OnBallVisit();
+
+			// Check for obstacles or pipes
+			if (gridController.grid[x, z].TryGetComponent(out Obstacle obstacle))
+			{
+				direction = obstacle.GetDirection(direction);
+			}
+			else if (gridController.grid[x, z].TryGetComponent(out Pipe pipe) && pipe.enterDirection == direction)
+			{
+				pipe.BallEnter(this);
+
+				var material = meshRenderer.materials[0];
+				// Fade the ball out and in
+				material.DOColor(new Color(1, 1, 1, 0), fadeDuration);
+				SetBallPosition(x, z);
+				yield return new WaitForSeconds(0.5f);
+
+				material.DOColor(new Color(1, 1, 1, 1), fadeDuration);
+				yield return new WaitForSeconds(0.5f);
+			}
+
+			// Recursively call Move
+			yield return Move();
+		}
+
+		private void DecideOnDirection()
+		{
+			// Determine the direction based on ball position within grid bounds
 			if (x == 0 && z != 0)
 				direction = Direction.RIGHT;
-			else if (x != 0 && z == 0)
+			else if (z == 0 && x != 0)
 				direction = Direction.UP;
 			else if (x == gridController.gridWidth - 1 && z != gridController.gridHeight - 1)
 				direction = Direction.LEFT;
-			else if (x != gridController.gridWidth - 1 && z == gridController.gridHeight - 1)
+			else if (z == gridController.gridHeight - 1 && x != gridController.gridWidth - 1)
 				direction = Direction.DOWN;
 
+			// Move ball in the chosen direction
 			switch (direction)
 			{
 				case Direction.UP:
@@ -54,37 +94,15 @@ namespace GrandTour
 					x++;
 					break;
 			}
-			Vector3 pos = new Vector3(gridController.grid[x, z].transform.position.x, transform.position.y, gridController.grid[x, z].transform.position.z);
-			Tween t = transform.DOMove(pos, moveTime).SetEase(Ease.Linear);
-			yield return t.WaitForCompletion();
-
-			gridController.grid[x, z].OnBallVisit();
-
-			if (gridController.grid[x, z].TryGetComponent(out Obstacle obstacle))
-			{
-				direction = obstacle.GetDirection(direction);
-			}
-			else if (gridController.grid[x, z].TryGetComponent(out Pipe pipe))
-			{
-				if (pipe.enterDirection == direction)
-				{
-					pipe.BallEnter(this);
-					meshRenderer.materials[0].DOColor(new Color(1, 1, 1, 0), timeToFade);
-					yield return new WaitForSeconds(timeToFade);
-					SetBallPosition(x, z);
-					yield return new WaitForSeconds(1f);
-					meshRenderer.materials[0].DOColor(new Color(1, 1, 1, 1), timeToFade);
-					yield return new WaitForSeconds(timeToFade);
-				}
-			}
-
-			yield return Move();
 		}
 
 		public void SetBallPosition(int x, int z)
 		{
-			Vector3 pos = new Vector3(gridController.grid[x, z].transform.position.x, transform.position.y, gridController.grid[x, z].transform.position.z);
-			transform.position = pos;
+			transform.position = new Vector3(
+				gridController.grid[x, z].transform.position.x,
+				transform.position.y,
+				gridController.grid[x, z].transform.position.z
+			);
 		}
 	}
 

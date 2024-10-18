@@ -10,7 +10,9 @@ namespace GrandTour
 		[Header("Grid Settings")]
 		public int gridWidth = 5;
 		public int gridHeight = 5;
+		public Block[,] grid;
 		[SerializeField] private float tileSize = 1.0f;
+		private Ball spawnedBall;
 
 		[Header("Models")]
 		[SerializeField] private Ball ball;
@@ -25,12 +27,6 @@ namespace GrandTour
 
 		[Header("Cinemachine")]
 		[SerializeField] private Cinemachine.CinemachineTargetGroup targetGroup;
-
-		private Vector2 ballPosition;
-		private Vector2 holePosition;
-		private Ball spawnedBall;
-
-		public Block[,] grid;
 
 		void Awake()
 		{
@@ -84,6 +80,7 @@ namespace GrandTour
 				zPos = 0;
 			}
 
+			//obstacle
 			Block n = grid[5, 3];
 			Vector3 pos = n.transform.position;
 			Destroy(n.gameObject);
@@ -91,6 +88,7 @@ namespace GrandTour
 			grid[5, 3] = n;
 			n.transform.position = pos;
 
+			//first pipe
 			n = grid[1, 3];
 			pos = n.transform.position;
 			Destroy(n.gameObject);
@@ -102,6 +100,7 @@ namespace GrandTour
 			p1.SetLookingDirection(Direction.RIGHT);
 			n.transform.position = pos;
 
+			//second pipe
 			n = grid[5, 1];
 			pos = n.transform.position;
 			Destroy(n.gameObject);
