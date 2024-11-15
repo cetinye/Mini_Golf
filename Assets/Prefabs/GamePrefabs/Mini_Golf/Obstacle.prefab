@@ -61,7 +61,7 @@ PrefabInstance:
     - target: {fileID: -6009921392208378166, guid: ef04ebc6ab311e34db3283212b26a361,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.85
+      value: 1.191
       objectReference: {fileID: 0}
     - target: {fileID: -6009921392208378166, guid: ef04ebc6ab311e34db3283212b26a361,
         type: 3}
@@ -186,6 +186,7 @@ PrefabInstance:
     - {fileID: 8853345146256907022, guid: c03aa42985b15424eb1c5749763488df, type: 3}
     m_RemovedGameObjects:
     - {fileID: 1315341443245312070, guid: c03aa42985b15424eb1c5749763488df, type: 3}
+    - {fileID: 2485669415914121688, guid: c03aa42985b15424eb1c5749763488df, type: 3}
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 2763353261883807045, guid: c03aa42985b15424eb1c5749763488df,
         type: 3}
@@ -223,3 +224,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   x: 0
   z: 0
+  incomingBallDirection: 0
+  rotation: 0

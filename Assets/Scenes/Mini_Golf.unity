@@ -542,7 +542,7 @@ Light:
   m_Type: 1
   m_Shape: 0
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 2
+  m_Intensity: 1.8
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -551,7 +551,7 @@ Light:
     m_Type: 2
     m_Resolution: -1
     m_CustomResolution: -1
-    m_Strength: 1
+    m_Strength: 0.4
     m_Bias: 0.05
     m_NormalBias: 0.4
     m_NearPlane: 0.2
@@ -693,6 +693,98 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &778584933
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 778584936}
+  - component: {fileID: 778584935}
+  - component: {fileID: 778584934}
+  m_Layer: 0
+  m_Name: Terrain
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 2147483647
+  m_IsActive: 1
+--- !u!154 &778584934
+TerrainCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 778584933}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_TerrainData: {fileID: 15600000, guid: 079e72d19c4db6b4a8d1808f55104dc3, type: 2}
+  m_EnableTreeColliders: 1
+--- !u!218 &778584935
+Terrain:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 778584933}
+  m_Enabled: 1
+  serializedVersion: 6
+  m_TerrainData: {fileID: 15600000, guid: 079e72d19c4db6b4a8d1808f55104dc3, type: 2}
+  m_TreeDistance: 5000
+  m_TreeBillboardDistance: 50
+  m_TreeCrossFadeLength: 5
+  m_TreeMaximumFullLODCount: 50
+  m_DetailObjectDistance: 80
+  m_DetailObjectDensity: 1
+  m_HeightmapPixelError: 5
+  m_SplatMapDistance: 1000
+  m_HeightmapMaximumLOD: 0
+  m_ShadowCastingMode: 2
+  m_DrawHeightmap: 1
+  m_DrawInstanced: 0
+  m_DrawTreesAndFoliage: 1
+  m_StaticShadowCaster: 0
+  m_IgnoreQualitySettings: 0
+  m_ReflectionProbeUsage: 1
+  m_MaterialTemplate: {fileID: 2100000, guid: 0bdc64f6bcbdb5e4e94582f5566d3fb8, type: 2}
+  m_BakeLightProbesForTrees: 1
+  m_PreserveTreePrototypeLayers: 0
+  m_DeringLightProbesForTrees: 1
+  m_ReceiveGI: 1
+  m_ScaleInLightmap: 0.0256
+  m_LightmapParameters: {fileID: 15203, guid: 0000000000000000f000000000000000, type: 0}
+  m_GroupingID: 0
+  m_RenderingLayerMask: 1
+  m_AllowAutoConnect: 1
+  m_EnableHeightmapRayTracing: 1
+  m_EnableTreesAndDetailsRayTracing: 0
+  m_TreeMotionVectorModeOverride: 3
+--- !u!4 &778584936
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 778584933}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -40, y: -1, z: -12}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1312,8 +1404,8 @@ MonoBehaviour:
   gridWidth: 10
   gridHeight: 10
   path: []
-  obstacleCount: 4
-  pipeCount: 1
+  obstacleCount: 2
+  pipeCount: 2
   tileSize: 2.15
   pipeColors:
   - {r: 0.07058824, g: 0.85490197, b: 0, a: 1}
@@ -1326,15 +1418,14 @@ MonoBehaviour:
   - {r: 1, g: 1, b: 1, a: 1}
   ball: {fileID: 6097825074296871924, guid: f2c6ee6cb22909b43a78155f18230589, type: 3}
   hole: {fileID: 6156352802880104164, guid: 60bc7113bf61422478b361fc6fefcb25, type: 3}
-  sand:
-  - {fileID: 919132149155446097, guid: f23d95559d040a1429e309037d34f23b, type: 3}
-  - {fileID: 919132149155446097, guid: 9ada21b29f1579b44b8ee43fe70c10ec, type: 3}
-  - {fileID: 919132149155446097, guid: 03de5f86e54176f4aa3fac80de43af60, type: 3}
   obstacle: {fileID: 4596760284667843013, guid: 2e4d91b3783c01c46863f866bec38ebd,
     type: 3}
-  tree:
-  - {fileID: 919132149155446097, guid: 0256303519ade7d448eb427e89348b68, type: 3}
-  - {fileID: 919132149155446097, guid: 4ba1dbf8225cac94180a1220453b0bae, type: 3}
+  decorations:
+  - {fileID: 4282083243106479935, guid: d27fd4d3c05f3df44ac0e13f322165d4, type: 3}
+  - {fileID: 4282083243106479935, guid: 33f8f436ad020d04083509882e19c229, type: 3}
+  - {fileID: 4282083243106479935, guid: 7eab81677f72df24d86d404e85b678d4, type: 3}
+  - {fileID: 4382741765217706426, guid: 9ca8328c09bc0414abba7fe89f4196c3, type: 3}
+  - {fileID: 4382741765217706426, guid: 9ca8328c09bc0414abba7fe89f4196c3, type: 3}
   ballStart: {fileID: 5593509367876999498, guid: 2e1f4f71daa99f341bf3c468e05eee0b,
     type: 3}
   pipe: {fileID: 7480502966002271590, guid: d5268786118877f4eafada48256cd518, type: 3}
@@ -1429,3 +1520,4 @@ SceneRoots:
   - {fileID: 2028984790}
   - {fileID: 430468247}
   - {fileID: 1628036348}
+  - {fileID: 778584936}

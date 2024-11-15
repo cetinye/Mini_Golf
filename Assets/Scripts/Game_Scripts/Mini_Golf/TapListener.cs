@@ -1,7 +1,7 @@
 using Lean.Touch;
 using UnityEngine;
 
-namespace GrandTour
+namespace MiniGolf
 {
 	public class TapListener : MonoBehaviour
 	{

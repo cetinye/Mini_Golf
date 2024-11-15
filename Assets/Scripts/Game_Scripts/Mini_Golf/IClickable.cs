@@ -1,4 +1,4 @@
-namespace GrandTour
+namespace MiniGolf
 {
 	public interface IClickable
 	{

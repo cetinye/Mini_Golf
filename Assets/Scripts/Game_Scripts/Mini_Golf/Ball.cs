@@ -2,7 +2,7 @@ using System.Collections;
 using DG.Tweening;
 using UnityEngine;
 
-namespace GrandTour
+namespace MiniGolf
 {
 	public class Ball : MonoBehaviour
 	{

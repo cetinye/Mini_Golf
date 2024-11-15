@@ -67,6 +67,7 @@ PrefabInstance:
     - {fileID: 8853345146256907022, guid: c03aa42985b15424eb1c5749763488df, type: 3}
     m_RemovedGameObjects:
     - {fileID: 1315341443245312070, guid: c03aa42985b15424eb1c5749763488df, type: 3}
+    - {fileID: 2485669415914121688, guid: c03aa42985b15424eb1c5749763488df, type: 3}
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 2763353261883807045, guid: c03aa42985b15424eb1c5749763488df,
         type: 3}
@@ -98,6 +99,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   x: 0
   z: 0
+  incomingBallDirection: 0
   flagPref: {fileID: 1901020896164769394, guid: bcfeefc955656ab4890b7c7872e3af76,
     type: 3}
 --- !u!4 &2567637967432296337 stripped

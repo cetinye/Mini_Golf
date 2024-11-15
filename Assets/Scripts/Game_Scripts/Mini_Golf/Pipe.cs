@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace GrandTour
+namespace MiniGolf
 {
 	public class Pipe : Block
 	{

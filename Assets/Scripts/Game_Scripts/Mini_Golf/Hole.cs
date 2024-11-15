@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace GrandTour
+namespace MiniGolf
 {
 	public class Hole : Block, IClickable
 	{
