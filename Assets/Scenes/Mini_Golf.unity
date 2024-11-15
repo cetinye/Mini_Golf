@@ -971,8 +971,8 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 2023721691}
-        m_TargetAssemblyTypeName: GrandTour.GridController, Assembly-CSharp
-        m_MethodName: DeleteGrid
+        m_TargetAssemblyTypeName: MiniGolf.GridController, Assembly-CSharp
+        m_MethodName: Restart
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -1404,8 +1404,8 @@ MonoBehaviour:
   gridWidth: 10
   gridHeight: 10
   path: []
-  obstacleCount: 2
-  pipeCount: 2
+  obstacleCount: 7
+  pipeCount: 1
   tileSize: 2.15
   pipeColors:
   - {r: 0.07058824, g: 0.85490197, b: 0, a: 1}

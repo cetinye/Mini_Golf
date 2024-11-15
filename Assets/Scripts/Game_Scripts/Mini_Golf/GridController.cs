@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -34,6 +35,14 @@ namespace MiniGolf
 
 		[Header("Cinemachine")]
 		[SerializeField] private Cinemachine.CinemachineTargetGroup targetGroup;
+		
+		IEnumerator spawnObstaclesRoutine;
+		IEnumerator spawnPipesRoutine;
+
+		public void Restart()
+		{
+			StartCoroutine(DeleteGrid());
+		}
 
 		void Awake()
 		{
@@ -50,21 +59,40 @@ namespace MiniGolf
 
 		void Start()
 		{
-			CreateGrid();
+			StartCoroutine(CreateGrid());
 		}
 
-		public void CreateGrid()
+		IEnumerator CreateGrid()
 		{
 			InitializeGrid();
 			ChooseBallSpawnPoint();
 			CalculateBallPath();
-			SpawnObstacles(obstacleCount);
-			SpawnPipes(pipeCount);
+
+			if (spawnObstaclesRoutine != null)
+			{
+				StopCoroutine(spawnObstaclesRoutine);
+				spawnObstaclesRoutine = null;
+			}
+
+			if (spawnPipesRoutine != null)
+			{
+				StopCoroutine(spawnPipesRoutine);
+				spawnPipesRoutine = null;
+			}
+			
+			spawnObstaclesRoutine = SpawnObstacles(obstacleCount);
+			spawnPipesRoutine = SpawnPipes(pipeCount);
+
+			StartCoroutine(spawnObstaclesRoutine);
+			StartCoroutine(spawnPipesRoutine);
+			
 			DisableCorners();
 			SpawnDecorations();
+
+			yield return null;
 		}
 
-		public void DeleteGrid()
+		IEnumerator DeleteGrid()
 		{
 			for (var i = 0; i < gridWidth; i++)
 			{
@@ -99,7 +127,7 @@ namespace MiniGolf
 			pipeColorIdx = 0;
 			Destroy(spawnedBall.gameObject);
 
-			CreateGrid();
+			yield return CreateGrid();
 		}
 
 		private void InitializeGrid()
@@ -138,7 +166,7 @@ namespace MiniGolf
 			}
 		}
 
-		private void SpawnObstacles(int obstacleCount)
+		IEnumerator SpawnObstacles(int obstacleCount)
 		{
 			for (int i = 0; i < obstacleCount; i++)
 			{
@@ -147,8 +175,7 @@ namespace MiniGolf
 				// if not available then delete grid
 				if (b == null)
 				{
-					DeleteGrid();
-					return;
+					yield return DeleteGrid();
 				}
 				
 				destroyList.Add(b.gameObject);
@@ -158,7 +185,7 @@ namespace MiniGolf
 			}
 		}
 
-		private void SpawnPipes(int pipeCount)
+		IEnumerator SpawnPipes(int pipeCount)
 		{
 			for (int i = 0; i < pipeCount; i++)
 			{
@@ -167,8 +194,7 @@ namespace MiniGolf
 				// if not available then delete grid
 				if (b1 == null)
 				{
-					DeleteGrid();
-					return;
+					yield return DeleteGrid();
 				}
 				
 				destroyList.Add(b1.gameObject);
@@ -178,14 +204,14 @@ namespace MiniGolf
 				
 				Direction selectedDirForP2 = (Direction)Random.Range(0, 4);
 				Block b2 = GetEmptyBlock(selectedDirForP2);
-				destroyList.Add(b2.gameObject);
 
 				// if not available then delete grid
 				if (b2 == null)
 				{
-					DeleteGrid();
-					return;
+					yield return DeleteGrid();
 				}
+				
+				destroyList.Add(b2.gameObject);
 
 				Pipe p2 = SetPipe(b2.x, b2.z, selectedDirForP2, pipeColors[pipeColorIdx]);
 				destroyList.Add(p2.gameObject);
