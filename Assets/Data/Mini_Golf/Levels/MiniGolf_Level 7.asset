@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0d28fb62cdbde7489ad811b663ae470, type: 3}
+  m_Name: MiniGolf_Level 7
+  m_EditorClassIdentifier: 
+  levelId: 7
+  gridSizeX: 6
+  gridSizeY: 6
+  numOfObstacles: 4
+  rateOfFakeObstacles: 20
+  numOfPipe: 0
+  numOfFakePipe: 0
+  previewTime: 3
+  answerTime: 8
+  levelUpCriteria: 2
+  levelDownCriteria: 1
+  totalNumOfQuestions: 5
+  pointsPerCorrect: 100
+  maxInGame: 500
+  penaltyPoints: 25

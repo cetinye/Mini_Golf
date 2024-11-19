@@ -7,21 +7,21 @@ namespace MiniGolf
 {
 	public class GridController : MonoBehaviour
 	{
-		public static GridController instance;
-
 		[Header("Grid Settings")]
 		public int gridWidth;
 		public int gridHeight;
 		public Block[,] grid;
-		[SerializeField] private List<Block> path = new List<Block>();
-		[SerializeField] private int obstacleCount;
-		[SerializeField] private int pipeCount;
-		[SerializeField] private float tileSize = 1.0f;
-		[SerializeField] private List<Color> pipeColors = new List<Color>();
+		private int obstacleCount;
+		private int rateOfFakeObstacles;
+		private int pipeCount;
+		private int numOfFakePipe;
+		[SerializeField] private float tileSize = 2.125f;
 		private Ball spawnedBall;
 		private int lastIndex;
 		private List<GameObject> destroyList = new List<GameObject>();
 		private int pipeColorIdx = 0;
+		[SerializeField] private List<Color> pipeColors = new List<Color>();
+		[SerializeField] private List<Block> path = new List<Block>();
 
 		[Header("Models")]
 		[SerializeField] private Ball ball;
@@ -35,7 +35,7 @@ namespace MiniGolf
 
 		[Header("Cinemachine")]
 		[SerializeField] private Cinemachine.CinemachineTargetGroup targetGroup;
-		
+
 		IEnumerator spawnObstaclesRoutine;
 		IEnumerator spawnPipesRoutine;
 
@@ -44,20 +44,17 @@ namespace MiniGolf
 			StartCoroutine(DeleteGrid());
 		}
 
-		void Awake()
+		public void AssignVariables()
 		{
-			if (instance == null)
-			{
-				instance = this;
-			}
-			else
-			{
-				Destroy(gameObject);
-				instance = null;
-			}
+			gridWidth = LevelManager.LevelSO.gridSizeX;
+			gridHeight = LevelManager.LevelSO.gridSizeY;
+			obstacleCount = LevelManager.LevelSO.numOfObstacles;
+			rateOfFakeObstacles = LevelManager.LevelSO.rateOfFakeObstacles;
+			pipeCount = LevelManager.LevelSO.numOfPipe;
+			numOfFakePipe = LevelManager.LevelSO.numOfFakePipe;
 		}
 
-		void Start()
+		public void Create()
 		{
 			StartCoroutine(CreateGrid());
 		}
@@ -79,13 +76,13 @@ namespace MiniGolf
 				StopCoroutine(spawnPipesRoutine);
 				spawnPipesRoutine = null;
 			}
-			
+
 			spawnObstaclesRoutine = SpawnObstacles(obstacleCount);
 			spawnPipesRoutine = SpawnPipes(pipeCount);
 
 			StartCoroutine(spawnObstaclesRoutine);
 			StartCoroutine(spawnPipesRoutine);
-			
+
 			DisableCorners();
 			SpawnDecorations();
 
@@ -127,6 +124,7 @@ namespace MiniGolf
 			pipeColorIdx = 0;
 			Destroy(spawnedBall.gameObject);
 
+			AssignVariables();
 			yield return CreateGrid();
 		}
 
@@ -177,7 +175,7 @@ namespace MiniGolf
 				{
 					yield return DeleteGrid();
 				}
-				
+
 				destroyList.Add(b.gameObject);
 
 				SetObstacle(b.x, b.z, (Rotation)Random.Range(0, 2));
@@ -196,12 +194,15 @@ namespace MiniGolf
 				{
 					yield return DeleteGrid();
 				}
-				
+
+				if (destroyList == null)
+					yield return null;
+
 				destroyList.Add(b1.gameObject);
 
 				Pipe p1 = SetPipe(b1.x, b1.z, GetOppositeDirection(b1.incomingBallDirection), pipeColors[pipeColorIdx]);
 				destroyList.Add(p1.gameObject);
-				
+
 				Direction selectedDirForP2 = (Direction)Random.Range(0, 4);
 				Block b2 = GetEmptyBlock(selectedDirForP2);
 
@@ -210,7 +211,7 @@ namespace MiniGolf
 				{
 					yield return DeleteGrid();
 				}
-				
+
 				destroyList.Add(b2.gameObject);
 
 				Pipe p2 = SetPipe(b2.x, b2.z, selectedDirForP2, pipeColors[pipeColorIdx]);
@@ -225,7 +226,7 @@ namespace MiniGolf
 
 		private void SpawnDecorations()
 		{
-			for (int i = 0; i < gridWidth * gridHeight * 8f / 100f; i++)
+			for (int i = 0; i < gridWidth * gridHeight * rateOfFakeObstacles / 100f; i++)
 			{
 				Block blockToReplace = GetEmptyBlock();
 				GameObject decor = Instantiate(decorations[Random.Range(0, decorations.Count)], transform);
@@ -237,7 +238,7 @@ namespace MiniGolf
 				targetGroup.AddMember(decor.transform, 1.0f, 1.0f);
 				destroyList.Remove(blockToReplace.gameObject);
 				destroyList.Add(decor.gameObject);
-				
+
 				Destroy(blockToReplace.gameObject);
 			}
 		}
@@ -251,9 +252,9 @@ namespace MiniGolf
 			{
 				x = Random.Range(1, gridWidth - 2);
 				z = Random.Range(1, gridHeight - 2);
-			} while (path.Contains(grid[x,z]) || 
-			         grid[x, z].TryGetComponent(out Obstacle o) || grid[x, z].TryGetComponent(out Pipe p) ||
-			         (grid[x, z].TryGetComponent(out Block block) && path.Contains(block)));
+			} while (path.Contains(grid[x, z]) ||
+					 grid[x, z].TryGetComponent(out Obstacle o) || grid[x, z].TryGetComponent(out Pipe p) ||
+					 (grid[x, z].TryGetComponent(out Block block) && path.Contains(block)));
 
 			return grid[x, z];
 		}
@@ -267,10 +268,10 @@ namespace MiniGolf
 			{
 				x = Random.Range(1, gridWidth - 2);
 				z = Random.Range(1, gridHeight - 2);
-			} while (path.Contains(grid[x,z]) || 
-			         grid[x, z].TryGetComponent(out Obstacle o) || grid[x, z].TryGetComponent(out Pipe p) ||
-			         (grid[x, z].TryGetComponent(out Block block) && path.Contains(block)) ||
-			         IsContainsPipeOnDirection(dir, x, z));
+			} while (path.Contains(grid[x, z]) ||
+					 grid[x, z].TryGetComponent(out Obstacle o) || grid[x, z].TryGetComponent(out Pipe p) ||
+					 (grid[x, z].TryGetComponent(out Block block) && path.Contains(block)) ||
+					 IsContainsPipeOnDirection(dir, x, z));
 
 			return grid[x, z];
 		}
@@ -283,10 +284,10 @@ namespace MiniGolf
 			{
 				startX = x;
 				startZ = 0;
-				
+
 				while (startZ < gridHeight - 1)
 				{
-					if (grid[startX,++startZ].TryGetComponent(out Pipe p))
+					if (grid[startX, ++startZ].TryGetComponent(out Pipe p))
 						return true;
 				}
 			}
@@ -294,10 +295,10 @@ namespace MiniGolf
 			{
 				startX = 0;
 				startZ = z;
-				
+
 				while (startX < gridWidth - 1)
 				{
-					if (grid[++startX,startZ].TryGetComponent(out Pipe p))
+					if (grid[++startX, startZ].TryGetComponent(out Pipe p))
 						return true;
 				}
 			}
@@ -316,10 +317,10 @@ namespace MiniGolf
 					return null;
 				}
 				randIdx = Random.Range(lastIndex + 1, path.Count);
-			} while (path[randIdx].TryGetComponent(out Obstacle o) || 
-			         path[randIdx].TryGetComponent(out Pipe p) || 
-			         path[randIdx].x <= 0 || path[randIdx].z <= 0 || 
-			         path[randIdx].x >= gridWidth - 1 || path[randIdx].z >= gridHeight - 1);
+			} while (path[randIdx].TryGetComponent(out Obstacle o) ||
+					 path[randIdx].TryGetComponent(out Pipe p) ||
+					 path[randIdx].x <= 0 || path[randIdx].z <= 0 ||
+					 path[randIdx].x >= gridWidth - 1 || path[randIdx].z >= gridHeight - 1);
 
 			lastIndex = randIdx;
 			return path[randIdx];
@@ -377,8 +378,8 @@ namespace MiniGolf
 
 				// Check for simple back-and-forth cycles
 				if (previousPosition.HasValue && previousPosition.Value.x == tempBall.x &&
-				    previousPosition.Value.z == tempBall.z &&
-				    previousPosition.Value.direction == GetOppositeDirection(tempBall.direction))
+					previousPosition.Value.z == tempBall.z &&
+					previousPosition.Value.direction == GetOppositeDirection(tempBall.direction))
 				{
 					Debug.LogError("Detected back-and-forth movement, possible infinite loop.");
 					DeleteGrid();
@@ -456,7 +457,7 @@ namespace MiniGolf
 			// Get and delete existing block
 			Block block = grid[x, z];
 			Vector3 pos = block.transform.position;
-			
+
 			targetGroup.RemoveMember(block.transform);
 			Destroy(block.gameObject);
 
@@ -474,7 +475,7 @@ namespace MiniGolf
 			// Get and delete existing block
 			Block block = grid[x, z];
 			Vector3 pos = block.transform.position;
-			
+
 			targetGroup.RemoveMember(block.transform);
 			Destroy(block.gameObject);
 
