@@ -211,6 +211,9 @@ MonoBehaviour:
   x: 0
   z: 0
   incomingBallDirection: 0
+  fadeTime: 0.5
+  _meshRenderer: {fileID: 6140177609022980346}
+  _material: {fileID: 2100000, guid: c5d0fce0650f2564d9c425c321c79c9f, type: 2}
   lookingDirection: 0
   enterDirection: 0
   exitPipe: {fileID: 0}

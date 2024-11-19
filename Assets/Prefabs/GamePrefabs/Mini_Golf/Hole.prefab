@@ -100,6 +100,9 @@ MonoBehaviour:
   x: 0
   z: 0
   incomingBallDirection: 0
+  fadeTime: 0.5
+  _meshRenderer: {fileID: 0}
+  _material: {fileID: 0}
   flagPref: {fileID: 1901020896164769394, guid: bcfeefc955656ab4890b7c7872e3af76,
     type: 3}
 --- !u!4 &2567637967432296337 stripped

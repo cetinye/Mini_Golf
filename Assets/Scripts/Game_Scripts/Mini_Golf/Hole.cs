@@ -5,7 +5,7 @@ namespace MiniGolf
 {
 	public class Hole : Block, IClickable
 	{
-		public static Action FlagPlaced;
+		public static Action<int, int> FlagPlaced;
 		public static bool isFlagSet = false;
 		[SerializeField] private GameObject flagPref;
 
@@ -17,7 +17,7 @@ namespace MiniGolf
 			Debug.Log("Clicked Hole [" + x + " " + z + "]");
 			Instantiate(flagPref, transform);
 
-			FlagPlaced?.Invoke();
+			FlagPlaced?.Invoke(x, z);
 		}
 	}
 }

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Cinemachine;
 using UnityEngine;
 
 namespace MiniGolf
@@ -13,6 +14,18 @@ namespace MiniGolf
 
 		[Space()]
 		[SerializeField] private GridController gridController;
+
+		[Space()]
+		private GameState state = GameState.Idle;
+		public GameState GameState
+		{
+			get { return state; }
+			set
+			{
+				state = value;
+				Debug.Log("Game State: " + state);
+			}
+		}
 
 		private void Awake()
 		{
@@ -49,8 +62,27 @@ namespace MiniGolf
 
 		private void StartGame()
 		{
+			GameState = GameState.GridCreation;
 			gridController.AssignVariables();
 			gridController.Create();
 		}
+
+		public Block GetFinishBlock()
+		{
+			return gridController.lastBlock;
+		}
+	}
+
+	public enum GameState
+	{
+		Idle,
+		GridCreation,
+		MoveIn,
+		Preview,
+		Playing,
+		Selected,
+		Success,
+		Fail,
+		Timeout
 	}
 }

@@ -8,8 +8,8 @@ namespace MiniGolf
 
 		public void OnClick()
 		{
-			transform.Rotate(0, 90, 0);
-			rotation = rotation == Rotation.RightUp ? Rotation.RightDown : Rotation.RightUp;
+			// transform.Rotate(0, 90, 0);
+			// rotation = rotation == Rotation.RightUp ? Rotation.RightDown : Rotation.RightUp;
 		}
 
 		public void SetRotation(Rotation rotation)

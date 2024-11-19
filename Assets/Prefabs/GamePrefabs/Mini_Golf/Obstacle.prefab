@@ -113,6 +113,12 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ef04ebc6ab311e34db3283212b26a361, type: 3}
+--- !u!23 &558351369246464499 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -5293936662160175238, guid: ef04ebc6ab311e34db3283212b26a361,
+    type: 3}
+  m_PrefabInstance: {fileID: 3546445325525800585}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &3944370724863619426 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: ef04ebc6ab311e34db3283212b26a361,
@@ -225,4 +231,7 @@ MonoBehaviour:
   x: 0
   z: 0
   incomingBallDirection: 0
+  fadeTime: 0.5
+  _meshRenderer: {fileID: 558351369246464499}
+  _material: {fileID: 2100000, guid: c032142f42ed3b34195736b63f88a979, type: 2}
   rotation: 0

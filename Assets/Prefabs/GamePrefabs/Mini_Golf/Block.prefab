@@ -49,6 +49,9 @@ MonoBehaviour:
   x: 0
   z: 0
   incomingBallDirection: 0
+  fadeTime: 0.5
+  _meshRenderer: {fileID: 0}
+  _material: {fileID: 0}
 --- !u!65 &2451935258968871559
 BoxCollider:
   m_ObjectHideFlags: 0

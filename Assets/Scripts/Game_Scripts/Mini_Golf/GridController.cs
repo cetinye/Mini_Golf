@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using DG.Tweening;
 using UnityEngine;
 
 namespace MiniGolf
@@ -15,11 +16,16 @@ namespace MiniGolf
 		private int rateOfFakeObstacles;
 		private int pipeCount;
 		private int numOfFakePipe;
+		private float previewTime;
+		[SerializeField] private Transform gridTransform;
 		[SerializeField] private float tileSize = 2.125f;
 		private Ball spawnedBall;
 		private int lastIndex;
 		private List<GameObject> destroyList = new List<GameObject>();
 		private int pipeColorIdx = 0;
+		private Block ballSpawnBlock;
+		private Ball tempBall;
+		public Block lastBlock;
 		[SerializeField] private List<Color> pipeColors = new List<Color>();
 		[SerializeField] private List<Block> path = new List<Block>();
 		[SerializeField] private List<Block> decoratedBlocks = new List<Block>();
@@ -36,16 +42,32 @@ namespace MiniGolf
 
 		[Header("Cinemachine")]
 		[SerializeField] private Cinemachine.CinemachineTargetGroup targetGroup;
+		[SerializeField] private Cinemachine.CinemachineVirtualCamera virtualCamera;
+
+
+		[Header("Move Variables")]
+		[SerializeField] private Transform right;
+		[SerializeField] private Transform left;
+		[SerializeField] private float moveTime;
+		[SerializeField] private AnimationCurve moveAnimCurve;
 
 		IEnumerator spawnPathObstacles;
 		IEnumerator spawnObstaclesRoutine;
 		IEnumerator spawnPipesRoutine;
 
-		Ball tempBall;
-
 		public void Restart()
 		{
 			StartCoroutine(DeleteGrid());
+		}
+
+		void OnEnable()
+		{
+			Hole.FlagPlaced += OnFlagPlaced;
+		}
+
+		void OnDisable()
+		{
+			Hole.FlagPlaced -= OnFlagPlaced;
 		}
 
 		public void AssignVariables()
@@ -56,6 +78,7 @@ namespace MiniGolf
 			rateOfFakeObstacles = LevelManager.LevelSO.rateOfFakeObstacles;
 			pipeCount = LevelManager.LevelSO.numOfPipe;
 			numOfFakePipe = LevelManager.LevelSO.numOfFakePipe;
+			previewTime = LevelManager.LevelSO.previewTime;
 		}
 
 		public void Create()
@@ -122,10 +145,10 @@ namespace MiniGolf
 				}
 			}
 
-			for (int i = 0; i < transform.childCount; i++)
+			for (int i = 0; i < gridTransform.childCount; i++)
 			{
-				targetGroup.RemoveMember(transform.GetChild(i));
-				Destroy(transform.GetChild(i).gameObject);
+				targetGroup.RemoveMember(gridTransform.GetChild(i));
+				Destroy(gridTransform.GetChild(i).gameObject);
 			}
 
 			for (int i = 0; i < destroyList.Count; i++)
@@ -135,10 +158,18 @@ namespace MiniGolf
 				Destroy(destroyList[i].gameObject);
 			}
 
+			for (int i = 0; i < decoratedBlocks.Count; i++)
+			{
+				if (decoratedBlocks[i] == null) continue;
+
+				Destroy(decoratedBlocks[i].gameObject);
+			}
+
 			destroyList.Clear();
 			Hole.isFlagSet = false;
 			grid = null;
 			path.Clear();
+			decoratedBlocks.Clear();
 			lastIndex = 0;
 			pipeColorIdx = 0;
 			Destroy(spawnedBall.gameObject);
@@ -161,11 +192,11 @@ namespace MiniGolf
 					Block newBlock;
 					if (i == 0 || j == 0 || i == gridWidth - 1 || j == gridHeight - 1)
 					{
-						newBlock = Instantiate(hole, transform);
+						newBlock = Instantiate(hole, gridTransform);
 					}
 					else
 					{
-						newBlock = Instantiate(flat, transform);
+						newBlock = Instantiate(flat, gridTransform);
 					}
 
 					newBlock.x = i;
@@ -250,9 +281,11 @@ namespace MiniGolf
 
 			if (path[^1] != null)
 			{
-				Block lastBlock = path[^1];
+				lastBlock = path[^1];
 				Debug.Log("Path ends at [" + lastBlock.x + "," + lastBlock.z + "]");
 			}
+
+			yield return MoveGridIn();
 		}
 
 		private void SpawnDecorations()
@@ -260,13 +293,13 @@ namespace MiniGolf
 			for (int i = 0; i < gridWidth * gridHeight * rateOfFakeObstacles / 100f; i++)
 			{
 				Block blockToReplace = GetEmptyBlock();
-				
+
 				if (blockToReplace == null)
 				{
 					continue;
 				}
-				
-				GameObject decor = Instantiate(decorations[Random.Range(0, decorations.Count)], transform);
+
+				GameObject decor = Instantiate(decorations[Random.Range(0, decorations.Count)], gridTransform);
 				decor.transform.position = blockToReplace.transform.position;
 				GameObject model = decor.transform.GetChild(0).GetChild(0).gameObject;
 				model.transform.rotation = Quaternion.Euler(-90, Random.Range(0, 4) * 90, model.transform.rotation.z);
@@ -291,14 +324,14 @@ namespace MiniGolf
 				x = Random.Range(1, gridWidth - 1);
 				z = Random.Range(1, gridHeight - 1);
 
-				if (++tries > 10)
+				if (++tries > 100)
 				{
 					return null;
 				}
-				
+
 			} while (path.Contains(grid[x, z]) ||
 					 grid[x, z].TryGetComponent(out Obstacle o) || grid[x, z].TryGetComponent(out Pipe p) ||
-					 decoratedBlocks.Contains(grid[x,z]) ||
+					 decoratedBlocks.Contains(grid[x, z]) ||
 					 (grid[x, z].TryGetComponent(out Block block) && path.Contains(block)));
 
 			decoratedBlocks.Add(grid[x, z]);
@@ -379,8 +412,8 @@ namespace MiniGolf
 
 			if (tempBall == null)
 			{
-				tempBall = Instantiate(ball, transform);
-				tempBall.SetMeshRendererState(false);
+				tempBall = Instantiate(ball, gridTransform);
+				tempBall.SetMeshRendererState(false, true);
 			}
 
 			tempBall.x = spawnedBall.x;
@@ -525,7 +558,7 @@ namespace MiniGolf
 			Destroy(block.gameObject);
 
 			// Replace with obstacle
-			Obstacle o = Instantiate(obstacle, transform);
+			Obstacle o = Instantiate(obstacle, gridTransform);
 			grid[x, z] = o;
 			o.x = x;
 			o.z = z;
@@ -543,7 +576,7 @@ namespace MiniGolf
 			Destroy(block.gameObject);
 
 			// Replace with pipe
-			Pipe p = Instantiate(pipe, transform);
+			Pipe p = Instantiate(pipe, gridTransform);
 			grid[x, z] = p;
 			p.x = x;
 			p.z = z;
@@ -572,7 +605,7 @@ namespace MiniGolf
 		{
 			int rand = Random.Range(0, 4);
 			int randIndex;
-			Block block;
+			Block block = null;
 
 			if (rand == 0)
 			{
@@ -598,24 +631,31 @@ namespace MiniGolf
 				block = grid[randIndex, gridHeight - 1];
 				SpawnBall(randIndex, gridHeight - 1, block);
 			}
+
+			ballSpawnBlock = block;
 		}
 
 		private void SpawnBall(int x, int z, Block block)
 		{
-			Vector3 pos = block.transform.position;
-			targetGroup.RemoveMember(block.transform);
-			Destroy(block.gameObject);
-
-			grid[x, z] = Instantiate(ballStart, transform);
-			grid[x, z].transform.position = new Vector3(pos.x, 0f, pos.z);
-
-			spawnedBall = Instantiate(ball);
+			spawnedBall = Instantiate(ball, gridTransform);
+			spawnedBall.SetMeshRendererState(false, true);
 			spawnedBall.transform.position = new Vector3(grid[x, z].transform.position.x, spawnedBall.transform.position.y, grid[x, z].transform.position.z);
 
 			spawnedBall.x = x;
 			spawnedBall.z = z;
 
 			spawnedBall.SetGridController(this);
+		}
+
+		private void SwitchBallStartBlock()
+		{
+			Vector3 pos = ballSpawnBlock.transform.position;
+			targetGroup.RemoveMember(ballSpawnBlock.transform);
+
+			grid[ballSpawnBlock.x, ballSpawnBlock.z] = Instantiate(ballStart, gridTransform);
+			grid[ballSpawnBlock.x, ballSpawnBlock.z].transform.position = new Vector3(pos.x, 0f, pos.z);
+
+			Destroy(ballSpawnBlock.gameObject);
 		}
 
 		private Direction GetOppositeDirection(Direction d)
@@ -630,6 +670,47 @@ namespace MiniGolf
 				return Direction.LEFT;
 
 			return d;
+		}
+
+		private void SetObstacleVisibility(bool visible, bool isInstant = false)
+		{
+			for (int x = 0; x < gridWidth; x++)
+			{
+				for (int z = 0; z < gridHeight; z++)
+				{
+					grid[x, z].SetMeshRendererState(visible, isInstant);
+				}
+			}
+		}
+
+		private void OnFlagPlaced(int x, int z)
+		{
+			SetObstacleVisibility(true);
+		}
+
+		IEnumerator MoveGridIn()
+		{
+			LevelManager.Instance.GameState = GameState.MoveIn;
+
+			SetObstacleVisibility(false, true);
+			virtualCamera.enabled = true;
+			yield return new WaitForEndOfFrame();
+			virtualCamera.enabled = false;
+
+			gridTransform.position = right.transform.position;
+
+			Tween t = gridTransform.DOMove(Vector3.zero, moveTime).SetEase(moveAnimCurve);
+			yield return t.WaitForCompletion();
+
+			LevelManager.Instance.GameState = GameState.Preview;
+			SetObstacleVisibility(true);
+			yield return new WaitForSeconds(previewTime + 0.5f);
+
+			SetObstacleVisibility(false);
+			SwitchBallStartBlock();
+			spawnedBall.SetMeshRendererState(true);
+
+			LevelManager.Instance.GameState = GameState.Playing;
 		}
 	}
 }

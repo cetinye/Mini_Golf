@@ -15,6 +15,7 @@ namespace MiniGolf
 
 		private MeshRenderer meshRenderer;
 		private GridController gridController;
+		private Block clickedHole;
 
 		private void Awake()
 		{
@@ -36,13 +37,24 @@ namespace MiniGolf
 			Hole.FlagPlaced -= OnFlagPlaced;
 		}
 
-		void OnFlagPlaced()
+		void OnFlagPlaced(int x, int z)
+		{
+			if (LevelManager.Instance.GameState != GameState.Playing) return;
+
+			clickedHole = gridController.grid[x, z];
+
+			Invoke(nameof(StartMove), 0.5f);
+		}
+
+		private void StartMove()
 		{
 			StartCoroutine(Move());
 		}
 
 		private IEnumerator Move()
 		{
+			LevelManager.Instance.GameState = GameState.Selected;
+
 			DecideOnDirection();
 
 			Vector3 targetPosition = new Vector3(
@@ -62,6 +74,16 @@ namespace MiniGolf
 				Debug.Log("Ball reached end of grid");
 				Tween t = transform.DOMoveY(0, 0.5f);
 				yield return t.WaitForCompletion();
+
+				if (LevelManager.Instance.GetFinishBlock() == clickedHole)
+				{
+					LevelManager.Instance.GameState = GameState.Success;
+				}
+				else
+				{
+					LevelManager.Instance.GameState = GameState.Fail;
+				}
+
 				yield break;
 			}
 
@@ -87,9 +109,27 @@ namespace MiniGolf
 			yield return Move();
 		}
 
-		public void SetMeshRendererState(bool state)
+		public void SetMeshRendererState(bool state, bool isInstant = false)
 		{
-			meshRenderer.enabled = state;
+			meshRenderer.enabled = false;
+
+			if (isInstant)
+				meshRenderer.enabled = state;
+			else
+			{
+				if (state)
+				{
+					FadeBall(0, 0f);
+					meshRenderer.enabled = true;
+					FadeBall(1, fadeDuration);
+				}
+				else
+				{
+					FadeBall(1, 0f);
+					meshRenderer.enabled = true;
+					FadeBall(0, fadeDuration);
+				}
+			}
 		}
 
 		public Tween FadeBall(float val, float duration)
