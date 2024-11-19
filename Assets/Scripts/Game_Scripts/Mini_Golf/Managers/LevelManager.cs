@@ -5,6 +5,8 @@ namespace MiniGolf
 {
 	public class LevelManager : MonoBehaviour
 	{
+		public static LevelManager Instance;
+
 		public int levelId;
 		[SerializeField] private List<LevelSO> levels = new List<LevelSO>();
 		public static LevelSO LevelSO;
@@ -14,6 +16,15 @@ namespace MiniGolf
 
 		private void Awake()
 		{
+			if (Instance != null && Instance != this)
+			{
+				Destroy(this);
+			}
+			else
+			{
+				Instance = this;
+			}
+
 			AssignLevel();
 		}
 

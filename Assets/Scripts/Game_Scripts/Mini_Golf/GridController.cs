@@ -22,6 +22,7 @@ namespace MiniGolf
 		private int pipeColorIdx = 0;
 		[SerializeField] private List<Color> pipeColors = new List<Color>();
 		[SerializeField] private List<Block> path = new List<Block>();
+		[SerializeField] private List<Block> decoratedBlocks = new List<Block>();
 
 		[Header("Models")]
 		[SerializeField] private Ball ball;
@@ -36,8 +37,11 @@ namespace MiniGolf
 		[Header("Cinemachine")]
 		[SerializeField] private Cinemachine.CinemachineTargetGroup targetGroup;
 
+		IEnumerator spawnPathObstacles;
 		IEnumerator spawnObstaclesRoutine;
 		IEnumerator spawnPipesRoutine;
+
+		Ball tempBall;
 
 		public void Restart()
 		{
@@ -65,6 +69,20 @@ namespace MiniGolf
 			ChooseBallSpawnPoint();
 			CalculateBallPath();
 
+			if (spawnPathObstacles != null)
+			{
+				StopCoroutine(spawnPathObstacles);
+				spawnPathObstacles = null;
+			}
+
+			spawnPathObstacles = SpawnPathObstacles();
+			StartCoroutine(spawnPathObstacles);
+
+			yield return null;
+		}
+
+		IEnumerator SpawnPathObstacles()
+		{
 			if (spawnObstaclesRoutine != null)
 			{
 				StopCoroutine(spawnObstaclesRoutine);
@@ -80,17 +98,18 @@ namespace MiniGolf
 			spawnObstaclesRoutine = SpawnObstacles(obstacleCount);
 			spawnPipesRoutine = SpawnPipes(pipeCount);
 
-			StartCoroutine(spawnObstaclesRoutine);
-			StartCoroutine(spawnPipesRoutine);
-
-			DisableCorners();
-			SpawnDecorations();
-
-			yield return null;
+			yield return spawnObstaclesRoutine;
 		}
 
 		IEnumerator DeleteGrid()
 		{
+			StopCoroutine(spawnPathObstacles);
+			StopCoroutine(spawnObstaclesRoutine);
+			StopCoroutine(spawnPipesRoutine);
+			spawnPathObstacles = null;
+			spawnObstaclesRoutine = null;
+			spawnPipesRoutine = null;
+
 			for (var i = 0; i < gridWidth; i++)
 			{
 				for (var j = 0; j < gridHeight; j++)
@@ -125,6 +144,7 @@ namespace MiniGolf
 			Destroy(spawnedBall.gameObject);
 
 			AssignVariables();
+
 			yield return CreateGrid();
 		}
 
@@ -181,6 +201,8 @@ namespace MiniGolf
 				SetObstacle(b.x, b.z, (Rotation)Random.Range(0, 2));
 				CalculateBallPath();
 			}
+
+			yield return spawnPipesRoutine;
 		}
 
 		IEnumerator SpawnPipes(int pipeCount)
@@ -222,6 +244,15 @@ namespace MiniGolf
 
 				CalculateBallPath();
 			}
+
+			DisableCorners();
+			SpawnDecorations();
+
+			if (path[^1] != null)
+			{
+				Block lastBlock = path[^1];
+				Debug.Log("Path ends at [" + lastBlock.x + "," + lastBlock.z + "]");
+			}
 		}
 
 		private void SpawnDecorations()
@@ -229,6 +260,12 @@ namespace MiniGolf
 			for (int i = 0; i < gridWidth * gridHeight * rateOfFakeObstacles / 100f; i++)
 			{
 				Block blockToReplace = GetEmptyBlock();
+				
+				if (blockToReplace == null)
+				{
+					continue;
+				}
+				
 				GameObject decor = Instantiate(decorations[Random.Range(0, decorations.Count)], transform);
 				decor.transform.position = blockToReplace.transform.position;
 				GameObject model = decor.transform.GetChild(0).GetChild(0).gameObject;
@@ -245,17 +282,26 @@ namespace MiniGolf
 
 		private Block GetEmptyBlock()
 		{
+			int tries = 0;
 			int x;
 			int z;
 
 			do
 			{
-				x = Random.Range(1, gridWidth - 2);
-				z = Random.Range(1, gridHeight - 2);
+				x = Random.Range(1, gridWidth - 1);
+				z = Random.Range(1, gridHeight - 1);
+
+				if (++tries > 10)
+				{
+					return null;
+				}
+				
 			} while (path.Contains(grid[x, z]) ||
 					 grid[x, z].TryGetComponent(out Obstacle o) || grid[x, z].TryGetComponent(out Pipe p) ||
+					 decoratedBlocks.Contains(grid[x,z]) ||
 					 (grid[x, z].TryGetComponent(out Block block) && path.Contains(block)));
 
+			decoratedBlocks.Add(grid[x, z]);
 			return grid[x, z];
 		}
 
@@ -331,8 +377,12 @@ namespace MiniGolf
 			int tries = 0;
 			path.Clear();
 
-			Ball tempBall = Instantiate(ball, transform);
-			tempBall.SetMeshRendererState(false);
+			if (tempBall == null)
+			{
+				tempBall = Instantiate(ball, transform);
+				tempBall.SetMeshRendererState(false);
+			}
+
 			tempBall.x = spawnedBall.x;
 			tempBall.z = spawnedBall.z;
 			tempBall.SetGridController(this);
@@ -350,7 +400,8 @@ namespace MiniGolf
 				if (visited.Contains(positionState))
 				{
 					Debug.LogError("Detected infinite loop in CalculateBallPath.");
-					DeleteGrid();
+					StopAllCoroutines();
+					StartCoroutine(DeleteGrid());
 					return;
 				}
 				visited.Add(positionState);
@@ -370,7 +421,8 @@ namespace MiniGolf
 						if (recentPath[i].Equals(recentPath[j]))
 						{
 							Debug.LogError("Detected a repeated state cycle in CalculateBallPath, indicating infinite loop.");
-							DeleteGrid();
+							StopAllCoroutines();
+							StartCoroutine(DeleteGrid());
 							return;
 						}
 					}
@@ -382,7 +434,8 @@ namespace MiniGolf
 					previousPosition.Value.direction == GetOppositeDirection(tempBall.direction))
 				{
 					Debug.LogError("Detected back-and-forth movement, possible infinite loop.");
-					DeleteGrid();
+					StopAllCoroutines();
+					StartCoroutine(DeleteGrid());
 					return;
 				}
 
@@ -429,12 +482,22 @@ namespace MiniGolf
 						if (visited.Contains((tempBall.x, tempBall.z, tempBall.direction)))
 						{
 							Debug.LogError("Infinite loop detected due to repetitive pipe entry.");
-							DeleteGrid();
+							StopAllCoroutines();
+							StartCoroutine(DeleteGrid());
 							return;
 						}
 
 						p.BallEnter(tempBall);
 						continue;
+					}
+
+					// Check for not enterable pipe spawned on path 
+					if (p.enterDirection != tempBall.direction)
+					{
+						Debug.LogError("Not enterable pipe spawned on path.");
+						StopAllCoroutines();
+						StartCoroutine(DeleteGrid());
+						return;
 					}
 				}
 
@@ -442,13 +505,13 @@ namespace MiniGolf
 				if (++tries >= 100)
 				{
 					Debug.LogError("Failed to find path or possible infinite loop detected after maximum tries.");
-					DeleteGrid();
+					StopAllCoroutines();
+					StartCoroutine(DeleteGrid());
 					return;
 				}
 
 			} while (tempBall.x >= 0 && tempBall.z >= 0 && tempBall.x < gridWidth && tempBall.z < gridHeight);
 
-			Debug.Log("Path ends at: [" + path[^1].x + " " + path[^1].z + "]");
 			Destroy(tempBall.gameObject);
 		}
 
