@@ -13,6 +13,8 @@ namespace MiniGolf
 		public float moveDuration;
 		public float fadeDuration;
 
+		[SerializeField] private Transform golfStick;
+
 		private MeshRenderer meshRenderer;
 		private GridController gridController;
 		private Block clickedHole;
@@ -48,13 +50,49 @@ namespace MiniGolf
 
 		private void StartMove()
 		{
-			StartCoroutine(Move());
+			StartCoroutine(GolfClubRoutine());
+		}
+
+		private IEnumerator GolfClubRoutine()
+		{
+			LevelManager.Instance.GameState = GameState.Selected;
+
+			int golfClubY = 0;
+			Transform golfClub = Instantiate(golfStick, transform);
+
+			if (x == 0 && z != 0)
+			{
+				golfClubY = 0;
+				golfClub.transform.position = new Vector3(-0.379999995f, 1.01100004f, -0.485000014f);
+			}
+			else if (x == gridController.gridWidth && z != 0)
+			{
+				golfClubY = 180;
+				golfClub.transform.position = new Vector3(0.356000006f, 1.01100004f, 0.458999991f);
+			}
+			else if (z == 0 && x != 0)
+			{
+				golfClubY = 270;
+				golfClub.transform.position = new Vector3(0.497000009f, 1.01100004f, -0.356000006f);
+			}
+			else if (z == gridController.gridHeight && x != 0)
+			{
+				golfClubY = 90;
+				// golfClub.transform.position =
+			}
+
+			golfClub.DOLocalRotate(new Vector3(0, golfClubY, 0), 0f);
+			yield return new WaitForEndOfFrame();
+			golfClub.DOLocalRotate(new Vector3(0, golfClubY, -37), 0.75f);
+			yield return new WaitForSeconds(0.75f);
+			golfClub.DOLocalRotate(new Vector3(0, golfClubY, 6), 0.125f).SetLoops(2, LoopType.Yoyo);
+			yield return new WaitForSeconds(0.25f);
+			golfClub.gameObject.SetActive(false);
+			yield return Move();
 		}
 
 		private IEnumerator Move()
 		{
-			LevelManager.Instance.GameState = GameState.Selected;
-
 			DecideOnDirection();
 
 			Vector3 targetPosition = new Vector3(
@@ -95,14 +133,10 @@ namespace MiniGolf
 			else if (gridController.grid[x, z].TryGetComponent(out Pipe pipe) && pipe.enterDirection == direction)
 			{
 				pipe.BallEnter(this);
-
-				// Fade the ball out and in
-				FadeBall(0, fadeDuration);
-				SetMeshRendererState(false);
+				SetMeshRendererState(false, true);
 				SetBallPosition(x, z);
 				yield return new WaitForSeconds(1f);
 				SetMeshRendererState(true);
-				FadeBall(1, fadeDuration);
 			}
 
 			// Recursively call Move

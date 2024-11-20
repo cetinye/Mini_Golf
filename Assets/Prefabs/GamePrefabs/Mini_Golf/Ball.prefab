@@ -72,6 +72,8 @@ MonoBehaviour:
   direction: 0
   moveDuration: 0.2
   fadeDuration: 0.5
+  golfStick: {fileID: 5944395485932300097, guid: 6518542a2175c9b40bbb3c3412b3b3bc,
+    type: 3}
 --- !u!1001 &2441525835352993819
 PrefabInstance:
   m_ObjectHideFlags: 0

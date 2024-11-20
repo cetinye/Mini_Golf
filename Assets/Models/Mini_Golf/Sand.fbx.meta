@@ -1,9 +1,14 @@
 fileFormatVersion: 2
-guid: 9ada21b29f1579b44b8ee43fe70c10ec
+guid: 590224bd88edc5f468f244d87677a3e5
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Kum
+    second: {fileID: 2100000, guid: 3f3c7455b2372454895681857f12eb18, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

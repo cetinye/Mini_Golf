@@ -257,6 +257,7 @@ namespace MiniGolf
 
 				Pipe p1 = SetPipe(b1.x, b1.z, GetOppositeDirection(b1.incomingBallDirection), pipeColors[pipeColorIdx]);
 				destroyList.Add(p1.gameObject);
+				p1.IsPipe = true;
 
 				Direction selectedDirForP2 = (Direction)Random.Range(0, 4);
 				Block b2 = GetEmptyBlock(selectedDirForP2);
@@ -271,6 +272,7 @@ namespace MiniGolf
 
 				Pipe p2 = SetPipe(b2.x, b2.z, selectedDirForP2, pipeColors[pipeColorIdx]);
 				destroyList.Add(p2.gameObject);
+				p2.IsPipe = true;
 
 				ConnectPipes(p1, p2);
 				pipeColorIdx++;
@@ -327,6 +329,7 @@ namespace MiniGolf
 				Pipe p1 = SetPipe(b1.x, b1.z, GetOppositeDirection((Direction)Random.Range(0, 4)), pipeColors[pipeColorIdx]);
 				destroyList.Add(p1.gameObject);
 				grid[b1.x, b1.z] = p1;
+				p1.IsPipe = true;
 
 				Direction selectedDirForP2 = (Direction)Random.Range(0, 4);
 				Block b2 = GetEmptyBlock(selectedDirForP2);
@@ -336,6 +339,7 @@ namespace MiniGolf
 				Pipe p2 = SetPipe(b2.x, b2.z, selectedDirForP2, pipeColors[pipeColorIdx]);
 				destroyList.Add(p2.gameObject);
 				grid[b2.x, b2.z] = p2;
+				p2.IsPipe = true;
 
 				ConnectPipes(p1, p2);
 				pipeColorIdx++;
@@ -355,8 +359,7 @@ namespace MiniGolf
 
 				Block decor = Instantiate(decorations[Random.Range(0, decorations.Count)], gridTransform);
 				decor.transform.position = blockToReplace.transform.position;
-				GameObject model = decor.transform.GetChild(0).GetChild(0).gameObject;
-				model.transform.rotation = Quaternion.Euler(-90, UnityEngine.Random.Range(0, 4) * 90, model.transform.rotation.z);
+				decor.transform.rotation = Quaternion.Euler(decor.transform.rotation.x, UnityEngine.Random.Range(0, 4) * 90, decor.transform.rotation.z);
 				decor.x = blockToReplace.x;
 				decor.z = blockToReplace.z;
 				grid[decor.x, decor.z] = decor;
@@ -585,6 +588,15 @@ namespace MiniGolf
 				// Avoid entering the same pipe in the same direction repeatedly
 				if (grid[tempBall.x, tempBall.z].TryGetComponent(out Pipe p))
 				{
+					// Check for not enterable pipe spawned on path 
+					if (p.enterDirection != tempBall.direction)
+					{
+						Debug.LogError("Not enterable pipe spawned on path.");
+						StopAllCoroutines();
+						StartCoroutine(DeleteGrid());
+						return;
+					}
+
 					if (p.enterDirection == tempBall.direction)
 					{
 						// Check if we are about to enter a loop through the pipe
@@ -598,15 +610,6 @@ namespace MiniGolf
 
 						p.BallEnter(tempBall);
 						continue;
-					}
-
-					// Check for not enterable pipe spawned on path 
-					if (p.enterDirection != tempBall.direction)
-					{
-						Debug.LogError("Not enterable pipe spawned on path.");
-						StopAllCoroutines();
-						StartCoroutine(DeleteGrid());
-						return;
 					}
 				}
 
@@ -659,6 +662,7 @@ namespace MiniGolf
 			p.transform.position = pos;
 			p.SetLookingDirection(dir);
 			p.SetColor(color);
+			p.IsPipe = true;
 
 			return p;
 		}

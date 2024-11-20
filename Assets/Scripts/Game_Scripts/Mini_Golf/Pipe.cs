@@ -7,7 +7,6 @@ namespace MiniGolf
 		public Direction lookingDirection;
 		public Direction enterDirection;
 		public Pipe exitPipe;
-		public MeshRenderer meshRenderer;
 
 		public void SetLookingDirection(Direction lookingDirection)
 		{
@@ -42,7 +41,7 @@ namespace MiniGolf
 		public void SetExitPipe(Pipe exitPipe)
 		{
 			this.exitPipe = exitPipe;
-			exitPipe.meshRenderer.materials[0] = meshRenderer.materials[0];
+			exitPipe.SetColor(meshRenderer.materials[0].color);
 		}
 
 		public void BallEnter(Ball ball)
