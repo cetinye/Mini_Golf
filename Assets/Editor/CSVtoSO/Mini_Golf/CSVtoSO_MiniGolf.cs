@@ -31,16 +31,17 @@ namespace MiniGolf
                 level.gridSizeY = int.Parse(splitData[2]);
                 level.numOfObstacles = int.Parse(splitData[3]);
                 level.rateOfFakeObstacles = int.Parse(splitData[4]);
-                level.numOfPipe = int.Parse(splitData[5]);
-                level.numOfFakePipe = int.Parse(splitData[6]);
-                level.previewTime = float.Parse(splitData[7]);
-                level.answerTime = float.Parse(splitData[8]);
-                level.levelUpCriteria = int.Parse(splitData[9]);
-                level.levelDownCriteria = int.Parse(splitData[10]);
-                level.totalNumOfQuestions = int.Parse(splitData[11]);
-                level.pointsPerCorrect = float.Parse(splitData[12]);
-                level.maxInGame = float.Parse(splitData[13]);
-                level.penaltyPoints = float.Parse(splitData[14]);
+                level.numOfFakeObstacles = int.Parse(splitData[5]);
+                level.numOfPipe = int.Parse(splitData[6]);
+                level.numOfFakePipe = int.Parse(splitData[7]);
+                level.previewTime = float.Parse(splitData[8]);
+                level.answerTime = float.Parse(splitData[9]);
+                level.levelUpCriteria = int.Parse(splitData[10]);
+                level.levelDownCriteria = int.Parse(splitData[11]);
+                level.totalNumOfQuestions = int.Parse(splitData[12]);
+                level.pointsPerCorrect = float.Parse(splitData[13]);
+                level.maxInGame = float.Parse(splitData[14]);
+                level.penaltyPoints = float.Parse(splitData[15]);
 
                 AssetDatabase.CreateAsset(level, $"Assets/Data/Mini_Golf/Levels/{"MiniGolf_Level " + startingNamingIndex}.asset");
                 startingNamingIndex++;

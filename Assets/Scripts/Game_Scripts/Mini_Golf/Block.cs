@@ -19,7 +19,10 @@ namespace MiniGolf
 
 		public void SetMeshRendererState(bool state, bool isInstant = false)
 		{
-			if (_meshRenderer == null) return;
+			if (_meshRenderer == null)
+			{
+				return;
+			}
 
 			_meshRenderer.enabled = false;
 

@@ -17,6 +17,7 @@ MonoBehaviour:
   gridSizeY: 9
   numOfObstacles: 9
   rateOfFakeObstacles: 30
+  numOfFakeObstacles: 3
   numOfPipe: 2
   numOfFakePipe: 1
   previewTime: 5

@@ -17,6 +17,7 @@ namespace MiniGolf
 		private int pipeCount;
 		private int numOfFakePipe;
 		private float previewTime;
+		private float numOfFakeObstacle;
 		[SerializeField] private Transform gridTransform;
 		[SerializeField] private float tileSize = 2.125f;
 		private Ball spawnedBall;
@@ -34,7 +35,7 @@ namespace MiniGolf
 		[SerializeField] private Ball ball;
 		[SerializeField] private Block hole;
 		[SerializeField] private Obstacle obstacle;
-		[SerializeField] private List<GameObject> decorations = new List<GameObject>();
+		[SerializeField] private List<Block> decorations = new List<Block>();
 		[SerializeField] private Block ballStart;
 		[SerializeField] private Pipe pipe;
 		[SerializeField] private GameObject flag;
@@ -79,6 +80,7 @@ namespace MiniGolf
 			pipeCount = LevelManager.LevelSO.numOfPipe;
 			numOfFakePipe = LevelManager.LevelSO.numOfFakePipe;
 			previewTime = LevelManager.LevelSO.previewTime;
+			numOfFakeObstacle = LevelManager.LevelSO.numOfFakeObstacles;
 		}
 
 		public void Create()
@@ -277,6 +279,8 @@ namespace MiniGolf
 			}
 
 			DisableCorners();
+			SpawnFakeObstacles();
+			SpawnFakePipes();
 			SpawnDecorations();
 
 			if (path[^1] != null)
@@ -286,6 +290,56 @@ namespace MiniGolf
 			}
 
 			yield return MoveGridIn();
+		}
+
+		private void SpawnFakeObstacles()
+		{
+			for (int i = 0; i < numOfFakeObstacle; i++)
+			{
+				Block blockToReplace = GetEmptyBlock();
+
+				Obstacle fakeObs = Instantiate(obstacle, gridTransform);
+				fakeObs.SetRotation((Rotation)UnityEngine.Random.Range(0, 2));
+				fakeObs.transform.position = blockToReplace.transform.position;
+				fakeObs.x = blockToReplace.x;
+				fakeObs.z = blockToReplace.z;
+				grid[fakeObs.x, fakeObs.z] = fakeObs;
+
+				targetGroup.RemoveMember(blockToReplace.transform);
+				targetGroup.AddMember(fakeObs.transform, 1.0f, 1.0f);
+				destroyList.Remove(blockToReplace.gameObject);
+				destroyList.Add(fakeObs.gameObject);
+
+				decoratedBlocks.Add(fakeObs);
+				Destroy(blockToReplace.gameObject);
+			}
+		}
+
+		private void SpawnFakePipes()
+		{
+			for (int i = 0; i < numOfFakePipe; i++)
+			{
+				Block b1 = GetEmptyBlock();
+
+				decoratedBlocks.Add(b1);
+				destroyList.Add(b1.gameObject);
+
+				Pipe p1 = SetPipe(b1.x, b1.z, GetOppositeDirection((Direction)Random.Range(0, 4)), pipeColors[pipeColorIdx]);
+				destroyList.Add(p1.gameObject);
+				grid[b1.x, b1.z] = p1;
+
+				Direction selectedDirForP2 = (Direction)Random.Range(0, 4);
+				Block b2 = GetEmptyBlock(selectedDirForP2);
+
+				destroyList.Add(b2.gameObject);
+
+				Pipe p2 = SetPipe(b2.x, b2.z, selectedDirForP2, pipeColors[pipeColorIdx]);
+				destroyList.Add(p2.gameObject);
+				grid[b2.x, b2.z] = p2;
+
+				ConnectPipes(p1, p2);
+				pipeColorIdx++;
+			}
 		}
 
 		private void SpawnDecorations()
@@ -299,16 +353,20 @@ namespace MiniGolf
 					continue;
 				}
 
-				GameObject decor = Instantiate(decorations[Random.Range(0, decorations.Count)], gridTransform);
+				Block decor = Instantiate(decorations[Random.Range(0, decorations.Count)], gridTransform);
 				decor.transform.position = blockToReplace.transform.position;
 				GameObject model = decor.transform.GetChild(0).GetChild(0).gameObject;
-				model.transform.rotation = Quaternion.Euler(-90, Random.Range(0, 4) * 90, model.transform.rotation.z);
+				model.transform.rotation = Quaternion.Euler(-90, UnityEngine.Random.Range(0, 4) * 90, model.transform.rotation.z);
+				decor.x = blockToReplace.x;
+				decor.z = blockToReplace.z;
+				grid[decor.x, decor.z] = decor;
 
 				targetGroup.RemoveMember(blockToReplace.transform);
 				targetGroup.AddMember(decor.transform, 1.0f, 1.0f);
 				destroyList.Remove(blockToReplace.gameObject);
 				destroyList.Add(decor.gameObject);
 
+				decoratedBlocks.Add(decor);
 				Destroy(blockToReplace.gameObject);
 			}
 		}
@@ -334,7 +392,6 @@ namespace MiniGolf
 					 decoratedBlocks.Contains(grid[x, z]) ||
 					 (grid[x, z].TryGetComponent(out Block block) && path.Contains(block)));
 
-			decoratedBlocks.Add(grid[x, z]);
 			return grid[x, z];
 		}
 
@@ -403,6 +460,25 @@ namespace MiniGolf
 
 			lastIndex = randIdx;
 			return path[randIdx];
+		}
+
+		private void SetObstacleVisibility(bool visible, bool isInstant = false)
+		{
+			for (int x = 0; x < gridWidth; x++)
+			{
+				for (int z = 0; z < gridHeight; z++)
+				{
+					if (grid[x, z] != null && grid[x, z].TryGetComponent<Block>(out Block b))
+					{
+						b.SetMeshRendererState(visible, isInstant);
+					}
+
+					else
+					{
+						Debug.LogWarning("No Block Found at " + x + " " + z);
+					}
+				}
+			}
 		}
 
 		private void CalculateBallPath()
@@ -672,17 +748,6 @@ namespace MiniGolf
 			return d;
 		}
 
-		private void SetObstacleVisibility(bool visible, bool isInstant = false)
-		{
-			for (int x = 0; x < gridWidth; x++)
-			{
-				for (int z = 0; z < gridHeight; z++)
-				{
-					grid[x, z].SetMeshRendererState(visible, isInstant);
-				}
-			}
-		}
-
 		private void OnFlagPlaced(int x, int z)
 		{
 			SetObstacleVisibility(true);
@@ -692,6 +757,7 @@ namespace MiniGolf
 		{
 			LevelManager.Instance.GameState = GameState.MoveIn;
 
+			yield return new WaitForEndOfFrame();
 			SetObstacleVisibility(false, true);
 			virtualCamera.enabled = true;
 			yield return new WaitForEndOfFrame();
