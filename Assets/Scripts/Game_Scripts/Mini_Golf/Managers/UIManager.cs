@@ -29,12 +29,12 @@ namespace MiniGolf
 
 		public void SetLevelText(int level)
 		{
-			levelText.text = level.ToString();
+			levelText.text = "Level " + level.ToString();
 		}
 
-		public void SetRoundText(int round)
+		public void SetRoundText(int round, int totalRound)
 		{
-			roundText.text = round.ToString();
+			roundText.text = round + "/" + totalRound;
 		}
 	}
 }

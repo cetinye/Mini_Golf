@@ -90,6 +90,8 @@ namespace MiniGolf
 
 		IEnumerator CreateGrid()
 		{
+			LevelManager.Instance.GameState = GameState.GridCreation;
+
 			InitializeGrid();
 			ChooseBallSpawnPoint();
 			CalculateBallPath();
@@ -183,6 +185,8 @@ namespace MiniGolf
 
 		private void InitializeGrid()
 		{
+			gridTransform.localPosition = Vector3.zero;
+
 			grid = new Block[gridWidth, gridHeight];
 			float xPos = 0;
 			float zPos = 0;
@@ -290,6 +294,16 @@ namespace MiniGolf
 				lastBlock = path[^1];
 				Debug.Log("Path ends at [" + lastBlock.x + "," + lastBlock.z + "]");
 			}
+
+			yield return new WaitForEndOfFrame();
+			virtualCamera.enabled = true;
+			yield return new WaitForEndOfFrame();
+			virtualCamera.enabled = false;
+
+			yield return new WaitForEndOfFrame();
+			SetObstacleVisibility(false, true);
+
+			gridTransform.localPosition = right.transform.localPosition;
 
 			yield return MoveGridIn();
 		}
@@ -761,16 +775,13 @@ namespace MiniGolf
 		{
 			LevelManager.Instance.GameState = GameState.MoveIn;
 
+			Tween t = gridTransform.DOLocalMove(Vector3.zero, moveTime).SetEase(moveAnimCurve);
+			yield return t.WaitForCompletion();
+
 			yield return new WaitForEndOfFrame();
-			SetObstacleVisibility(false, true);
 			virtualCamera.enabled = true;
 			yield return new WaitForEndOfFrame();
 			virtualCamera.enabled = false;
-
-			gridTransform.position = right.transform.position;
-
-			Tween t = gridTransform.DOMove(Vector3.zero, moveTime).SetEase(moveAnimCurve);
-			yield return t.WaitForCompletion();
 
 			LevelManager.Instance.GameState = GameState.Preview;
 			SetObstacleVisibility(true);
@@ -781,6 +792,23 @@ namespace MiniGolf
 			spawnedBall.SetMeshRendererState(true);
 
 			LevelManager.Instance.GameState = GameState.Playing;
+		}
+
+		public void MoveOutGrid()
+		{
+			StartCoroutine(MoveGridOut());
+		}
+
+		IEnumerator MoveGridOut()
+		{
+			yield return new WaitForEndOfFrame();
+
+			Tween t = gridTransform.DOLocalMove(left.transform.localPosition, moveTime).SetEase(moveAnimCurve);
+			yield return t.WaitForCompletion();
+
+			LevelManager.Instance.DecideRounds();
+
+			yield return null;
 		}
 	}
 }

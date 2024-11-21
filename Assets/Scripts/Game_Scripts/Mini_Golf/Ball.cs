@@ -43,6 +43,7 @@ namespace MiniGolf
 		{
 			if (LevelManager.Instance.GameState != GameState.Playing) return;
 
+			LevelManager.Instance.GameState = GameState.Selected;
 			clickedHole = gridController.grid[x, z];
 
 			Invoke(nameof(StartMove), 0.5f);
@@ -55,8 +56,6 @@ namespace MiniGolf
 
 		private IEnumerator GolfClubRoutine()
 		{
-			LevelManager.Instance.GameState = GameState.Selected;
-
 			int ballRotationY = 0;
 			Transform golfClub = Instantiate(golfStick, transform);
 
@@ -114,10 +113,12 @@ namespace MiniGolf
 				if (LevelManager.Instance.GetFinishBlock() == clickedHole)
 				{
 					LevelManager.Instance.GameState = GameState.Success;
+					LevelManager.Instance.RoundComplete(true);
 				}
 				else
 				{
 					LevelManager.Instance.GameState = GameState.Fail;
+					LevelManager.Instance.RoundComplete(false);
 				}
 
 				yield break;

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Cinemachine;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace MiniGolf
 {
@@ -8,12 +9,20 @@ namespace MiniGolf
 	{
 		public static LevelManager Instance;
 
+		[SerializeField] private UIManager uiManager;
+
 		public int levelId;
 		[SerializeField] private List<LevelSO> levels = new List<LevelSO>();
 		public static LevelSO LevelSO;
 
 		[Space()]
 		[SerializeField] private GridController gridController;
+
+		[Space()]
+		[SerializeField] private int correctCount, wrongCount;
+		[SerializeField] private int totalCorrectCount, totalWrongCount;
+		[SerializeField] private int roundsPlayed = 1;
+		[SerializeField] private float answerTimer;
 
 		[Space()]
 		private GameState state = GameState.Idle;
@@ -41,30 +50,104 @@ namespace MiniGolf
 			AssignLevel();
 		}
 
-		private void Start()
+		void Start()
 		{
 			StartGame();
 		}
 
+		void Update()
+		{
+			if (state == GameState.Playing)
+			{
+				answerTimer -= Time.deltaTime;
+
+				if (answerTimer < 0)
+				{
+					state = GameState.Timeout;
+					answerTimer = 0;
+					RoundComplete(false);
+				}
+
+				uiManager.SetFillImage(answerTimer, LevelSO.answerTime);
+			}
+		}
+
 		public void Restart()
 		{
-			levelId++;
-			AssignLevel();
 			gridController.Restart();
 		}
 
 		private void AssignLevel()
 		{
-			// levelId = PlayerPrefs.GetInt("MiniGolf_Level", 1);
+			levelId = PlayerPrefs.GetInt("MiniGolf_Level", 1);
 			levelId = Mathf.Clamp(levelId, 1, levels.Count);
 			LevelSO = levels[levelId - 1];
+
+			answerTimer = LevelSO.answerTime;
+
+			uiManager.SetLevelText(levelId);
+			uiManager.SetRoundText(roundsPlayed, LevelSO.totalNumOfQuestions);
+			uiManager.SetWrongText(totalWrongCount);
+			uiManager.SetCorrectText(totalCorrectCount);
 		}
 
-		private void StartGame()
+		public void StartGame()
 		{
-			GameState = GameState.GridCreation;
 			gridController.AssignVariables();
 			gridController.Create();
+		}
+
+		public void RoundComplete(bool isSuccess)
+		{
+			if (isSuccess)
+			{
+				correctCount++;
+				totalCorrectCount++;
+
+				uiManager.SetCorrectText(totalCorrectCount);
+			}
+			else
+			{
+				wrongCount++;
+				totalWrongCount++;
+
+				uiManager.SetWrongText(totalWrongCount);
+			}
+
+			DecideLevel();
+		}
+
+		public void DecideLevel()
+		{
+			if (correctCount >= LevelSO.levelUpCriteria)
+			{
+				levelId++;
+			}
+			else if (wrongCount >= LevelSO.levelDownCriteria)
+			{
+				levelId--;
+			}
+
+			PlayerPrefs.SetInt("MiniGolf_Level", levelId);
+
+			correctCount = 0;
+			wrongCount = 0;
+
+			AssignLevel();
+			gridController.MoveOutGrid();
+		}
+
+		public void DecideRounds()
+		{
+			if (++roundsPlayed > LevelSO.totalNumOfQuestions)
+			{
+				SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+			}
+			else
+			{
+				uiManager.SetRoundText(roundsPlayed, LevelSO.totalNumOfQuestions);
+				Restart();
+			}
 		}
 
 		public Block GetFinishBlock()
