@@ -290,15 +290,14 @@ namespace MiniGolf
 			SpawnFakePipes();
 			SpawnDecorations();
 
+			SetGridVisibility(false);
+
 			Debug.Log("Path ends at [" + lastBlock.x + "," + lastBlock.z + "]");
 
 			yield return new WaitForEndOfFrame();
 			virtualCamera.enabled = true;
 			yield return new WaitForEndOfFrame();
 			virtualCamera.enabled = false;
-
-			yield return new WaitForEndOfFrame();
-			SetObstacleVisibility(false, true);
 
 			gridTransform.localPosition = right.transform.localPosition;
 
@@ -491,6 +490,20 @@ namespace MiniGolf
 					else
 					{
 						Debug.LogWarning("No Block Found at " + x + " " + z);
+					}
+				}
+			}
+		}
+
+		private void SetGridVisibility(bool visible)
+		{
+			for (int x = 0; x < gridWidth; x++)
+			{
+				for (int z = 0; z < gridHeight; z++)
+				{
+					if (grid[x, z] != null && grid[x, z].TryGetComponent<Block>(out Block b))
+					{
+						b.HideShowControl(visible);
 					}
 				}
 			}
@@ -785,6 +798,8 @@ namespace MiniGolf
 		IEnumerator MoveGridIn()
 		{
 			LevelManager.Instance.GameState = GameState.MoveIn;
+
+			SetGridVisibility(true);
 
 			Tween t = gridTransform.DOLocalMove(Vector3.zero, moveTime).SetEase(moveAnimCurve);
 			yield return t.WaitForCompletion();

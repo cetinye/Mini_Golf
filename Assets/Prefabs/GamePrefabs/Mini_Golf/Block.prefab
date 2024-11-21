@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 2763353261883807045}
   - component: {fileID: 8853345146256907022}
   - component: {fileID: 2451935258968871559}
+  - component: {fileID: 5031943352482410910}
   m_Layer: 0
   m_Name: Block
   m_TagString: Untagged
@@ -50,8 +51,10 @@ MonoBehaviour:
   z: 0
   incomingBallDirection: 0
   fadeTime: 0.5
-  _meshRenderer: {fileID: 0}
-  _material: {fileID: 0}
+  meshRenderer: {fileID: 0}
+  _opaqueMaterial: {fileID: 0}
+  IsPipe: 0
+  visibilityController: {fileID: 5031943352482410910}
 --- !u!65 &2451935258968871559
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -73,6 +76,20 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 2, y: 2, z: 2}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &5031943352482410910
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1089259961148003126}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b51cb737fba2cb940b450246cc40fffe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  objects:
+  - {fileID: 2485669415914121688}
 --- !u!1001 &3368612239217005705
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -141,6 +158,12 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 83cbe090609819a458242f77764d210b, type: 3}
+--- !u!1 &2485669415914121688 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 83cbe090609819a458242f77764d210b,
+    type: 3}
+  m_PrefabInstance: {fileID: 3368612239217005705}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &2969296600174523234 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 83cbe090609819a458242f77764d210b,

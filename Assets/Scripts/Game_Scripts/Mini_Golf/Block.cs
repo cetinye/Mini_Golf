@@ -14,6 +14,7 @@ namespace MiniGolf
 		private Material _transparentMaterial;
 		public bool IsPipe;
 		private Material[] mats;
+		[SerializeField] private VisibilityController visibilityController;
 
 		void Start()
 		{
@@ -31,6 +32,11 @@ namespace MiniGolf
 			Debug.Log("Ball Visited [" + x + " " + z + "]");
 		}
 
+		public void HideShowControl(bool state)
+		{
+			visibilityController.SetVisible(state);
+		}
+
 		public void SetMeshRendererState(bool state, bool isInstant = false)
 		{
 			if (meshRenderer == null)
@@ -43,7 +49,9 @@ namespace MiniGolf
 			meshRenderer.enabled = false;
 
 			if (isInstant)
+			{
 				meshRenderer.enabled = state;
+			}
 			else
 			{
 				if (state)

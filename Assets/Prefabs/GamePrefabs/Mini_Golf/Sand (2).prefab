@@ -60,6 +60,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -7511558181221131132, guid: 2d897ccd168860146ba2293466c02120,
         type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: 2d897ccd168860146ba2293466c02120,
+        type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: 3f3c7455b2372454895681857f12eb18, type: 2}
@@ -73,6 +78,12 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2d897ccd168860146ba2293466c02120, type: 3}
+--- !u!1 &321281727942176483 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 2d897ccd168860146ba2293466c02120,
+    type: 3}
+  m_PrefabInstance: {fileID: 627132666518180786}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &1098522802159449177 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 2d897ccd168860146ba2293466c02120,
@@ -153,6 +164,12 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 83cbe090609819a458242f77764d210b, type: 3}
+--- !u!1 &1335732677255973734 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 83cbe090609819a458242f77764d210b,
+    type: 3}
+  m_PrefabInstance: {fileID: 2182011728059201079}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &1856232253660139996 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 83cbe090609819a458242f77764d210b,
@@ -222,6 +239,21 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5031943352482410910, guid: c03aa42985b15424eb1c5749763488df,
+        type: 3}
+      propertyPath: objects.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5031943352482410910, guid: c03aa42985b15424eb1c5749763488df,
+        type: 3}
+      propertyPath: objects.Array.data[0]
+      value: 
+      objectReference: {fileID: 321281727942176483}
+    - target: {fileID: 5031943352482410910, guid: c03aa42985b15424eb1c5749763488df,
+        type: 3}
+      propertyPath: objects.Array.data[1]
+      value: 
+      objectReference: {fileID: 1335732677255973734}
     - target: {fileID: 8853345146256907022, guid: c03aa42985b15424eb1c5749763488df,
         type: 3}
       propertyPath: meshRenderer
