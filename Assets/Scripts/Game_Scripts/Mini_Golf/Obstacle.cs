@@ -5,6 +5,7 @@ namespace MiniGolf
 	public class Obstacle : Block, IClickable
 	{
 		public Rotation rotation;
+		public bool isFake;
 
 		public void OnClick()
 		{

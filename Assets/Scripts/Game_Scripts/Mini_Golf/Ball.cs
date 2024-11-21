@@ -154,7 +154,13 @@ namespace MiniGolf
 				{
 					FadeBall(0, 0f);
 					meshRenderer.enabled = true;
-					FadeBall(1, fadeDuration);
+					FadeBall(1, fadeDuration).OnComplete(() =>
+					{
+						if (LevelManager.Instance.GameState == GameState.Preview)
+						{
+							LevelManager.Instance.GameState = GameState.Playing;
+						}
+					});
 				}
 				else
 				{

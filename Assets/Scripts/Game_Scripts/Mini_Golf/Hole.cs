@@ -11,7 +11,7 @@ namespace MiniGolf
 
 		public void OnClick()
 		{
-			if (isFlagSet) return;
+			if (isFlagSet || LevelManager.Instance.GameState != GameState.Playing) return;
 
 			isFlagSet = true;
 			Debug.Log("Clicked Hole [" + x + " " + z + "]");

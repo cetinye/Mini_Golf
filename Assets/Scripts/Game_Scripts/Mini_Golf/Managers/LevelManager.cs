@@ -84,6 +84,7 @@ namespace MiniGolf
 			LevelSO = levels[levelId - 1];
 
 			answerTimer = LevelSO.answerTime;
+			uiManager.SetFillImage(answerTimer, LevelSO.answerTime);
 
 			uiManager.SetLevelText(levelId);
 			uiManager.SetRoundText(roundsPlayed, LevelSO.totalNumOfQuestions);
@@ -122,16 +123,21 @@ namespace MiniGolf
 			if (correctCount >= LevelSO.levelUpCriteria)
 			{
 				levelId++;
+
+				correctCount = 0;
+				wrongCount = 0;
 			}
 			else if (wrongCount >= LevelSO.levelDownCriteria)
 			{
 				levelId--;
+
+				correctCount = 0;
+				wrongCount = 0;
 			}
 
 			PlayerPrefs.SetInt("MiniGolf_Level", levelId);
 
-			correctCount = 0;
-			wrongCount = 0;
+			uiManager.SetScoreText(GetScore());
 
 			AssignLevel();
 			gridController.MoveOutGrid();
@@ -148,6 +154,15 @@ namespace MiniGolf
 				uiManager.SetRoundText(roundsPlayed, LevelSO.totalNumOfQuestions);
 				Restart();
 			}
+		}
+
+		public int GetScore()
+		{
+			float inGameScore = (totalCorrectCount * LevelSO.pointsPerCorrect) - (totalWrongCount * LevelSO.penaltyPoints);
+			float maxInGame = LevelSO.totalNumOfQuestions * LevelSO.pointsPerCorrect;
+			float witminaScore = inGameScore / maxInGame * 1000f;
+
+			return Mathf.Clamp(Mathf.CeilToInt(witminaScore), 0, 1000);
 		}
 
 		public Block GetFinishBlock()

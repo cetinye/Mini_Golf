@@ -18,6 +18,7 @@ namespace MiniGolf
 		private int numOfFakePipe;
 		private float previewTime;
 		private float numOfFakeObstacle;
+		private int hitObstacleCount, hitPipeCount;
 		[SerializeField] private Transform gridTransform;
 		[SerializeField] private float tileSize = 2.125f;
 		private Ball spawnedBall;
@@ -289,11 +290,7 @@ namespace MiniGolf
 			SpawnFakePipes();
 			SpawnDecorations();
 
-			if (path[^1] != null)
-			{
-				lastBlock = path[^1];
-				Debug.Log("Path ends at [" + lastBlock.x + "," + lastBlock.z + "]");
-			}
+			Debug.Log("Path ends at [" + lastBlock.x + "," + lastBlock.z + "]");
 
 			yield return new WaitForEndOfFrame();
 			virtualCamera.enabled = true;
@@ -320,6 +317,7 @@ namespace MiniGolf
 				fakeObs.x = blockToReplace.x;
 				fakeObs.z = blockToReplace.z;
 				grid[fakeObs.x, fakeObs.z] = fakeObs;
+				fakeObs.isFake = true;
 
 				targetGroup.RemoveMember(blockToReplace.transform);
 				targetGroup.AddMember(fakeObs.transform, 1.0f, 1.0f);
@@ -399,7 +397,7 @@ namespace MiniGolf
 				x = Random.Range(1, gridWidth - 1);
 				z = Random.Range(1, gridHeight - 1);
 
-				if (++tries > 100)
+				if (++tries > 1000)
 				{
 					return null;
 				}
@@ -571,6 +569,8 @@ namespace MiniGolf
 				// Store the current position as the previous position before moving
 				previousPosition = (tempBall.x, tempBall.z, tempBall.direction);
 
+				lastBlock = grid[tempBall.x, tempBall.z];
+
 				// Move ball in the chosen direction
 				switch (tempBall.direction)
 				{
@@ -596,6 +596,7 @@ namespace MiniGolf
 				if (grid[tempBall.x, tempBall.z].TryGetComponent(out Obstacle o))
 				{
 					tempBall.direction = o.GetDirection(tempBall.direction);
+					hitObstacleCount++;
 					continue;
 				}
 
@@ -613,6 +614,8 @@ namespace MiniGolf
 
 					if (p.enterDirection == tempBall.direction)
 					{
+						hitPipeCount++;
+
 						// Check if we are about to enter a loop through the pipe
 						if (visited.Contains((tempBall.x, tempBall.z, tempBall.direction)))
 						{
@@ -631,6 +634,14 @@ namespace MiniGolf
 				if (++tries >= 100)
 				{
 					Debug.LogError("Failed to find path or possible infinite loop detected after maximum tries.");
+					StopAllCoroutines();
+					StartCoroutine(DeleteGrid());
+					return;
+				}
+
+				// Ensure path has given num of obstacles and pipes
+				if (hitObstacleCount != obstacleCount && hitPipeCount != pipeCount)
+				{
 					StopAllCoroutines();
 					StartCoroutine(DeleteGrid());
 					return;
@@ -790,8 +801,6 @@ namespace MiniGolf
 			SetObstacleVisibility(false);
 			SwitchBallStartBlock();
 			spawnedBall.SetMeshRendererState(true);
-
-			LevelManager.Instance.GameState = GameState.Playing;
 		}
 
 		public void MoveOutGrid()
