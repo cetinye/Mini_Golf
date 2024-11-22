@@ -16,6 +16,7 @@ namespace MiniGolf
 
 			isFlagSet = true;
 			Debug.Log("Clicked Hole [" + x + " " + z + "]");
+			AudioManager.Instance.PlayOneShot(SoundType.Flag);
 			GameObject flag = Instantiate(flagPref, transform);
 			float startPos = flag.transform.localPosition.y;
 			flag.transform.localPosition = new Vector3(flag.transform.localPosition.x, transform.localPosition.y + 5, flag.transform.localPosition.z);

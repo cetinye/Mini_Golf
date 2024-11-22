@@ -515,7 +515,6 @@ namespace MiniGolf
 		private void CalculateBallPath()
 		{
 			int tries = 0;
-			int pathPipeCount = 0;
 			hitObstacleCount = 0;
 			hitPipeCount = 0;
 			path.Clear();
@@ -590,22 +589,7 @@ namespace MiniGolf
 
 				lastBlock = grid[tempBall.x, tempBall.z];
 
-				// Move ball in the chosen direction
-				switch (tempBall.direction)
-				{
-					case Direction.UP:
-						tempBall.z++;
-						break;
-					case Direction.DOWN:
-						tempBall.z--;
-						break;
-					case Direction.LEFT:
-						tempBall.x--;
-						break;
-					case Direction.RIGHT:
-						tempBall.x++;
-						break;
-				}
+				tempBall.MoveBallOnDirection();
 
 				// Break if out-of-bounds (OOB)
 				if (tempBall.x < 0 || tempBall.z < 0 || tempBall.x >= gridWidth || tempBall.z >= gridHeight)
@@ -622,10 +606,8 @@ namespace MiniGolf
 				// Avoid entering the same pipe in the same direction repeatedly
 				if (grid[tempBall.x, tempBall.z].TryGetComponent(out Pipe p))
 				{
-					pathPipeCount++;
-
 					// Check for not enterable pipe spawned on path 
-					if (pathPipeCount % 2 == 1 && p.enterDirection != tempBall.direction)
+					if (p.enterDirection != tempBall.direction)
 					{
 						Debug.LogError("Not enterable pipe spawned on path.");
 						StopAllCoroutines();
@@ -771,8 +753,10 @@ namespace MiniGolf
 			Vector3 pos = ballSpawnBlock.transform.position;
 			targetGroup.RemoveMember(ballSpawnBlock.transform);
 
-			grid[ballSpawnBlock.x, ballSpawnBlock.z] = Instantiate(ballStart, gridTransform);
+			Block spawnedBlock = Instantiate(ballStart, gridTransform);
+			grid[ballSpawnBlock.x, ballSpawnBlock.z] = spawnedBlock;
 			grid[ballSpawnBlock.x, ballSpawnBlock.z].transform.position = new Vector3(pos.x, 0f, pos.z);
+			path[0] = grid[ballSpawnBlock.x, ballSpawnBlock.z];
 
 			Destroy(ballSpawnBlock.gameObject);
 		}
@@ -803,6 +787,7 @@ namespace MiniGolf
 			SetGridVisibility(true);
 
 			Tween t = gridTransform.DOLocalMove(Vector3.zero, moveTime).SetEase(moveAnimCurve);
+			AudioManager.Instance.PlayAfterXSeconds(SoundType.GridMove, 0.25f);
 			yield return t.WaitForCompletion();
 
 			yield return new WaitForEndOfFrame();
@@ -831,6 +816,7 @@ namespace MiniGolf
 			yield return new WaitForEndOfFrame();
 
 			Tween t = gridTransform.DOLocalMove(left.transform.localPosition, moveTime).SetEase(moveAnimCurve);
+			AudioManager.Instance.PlayAfterXSeconds(SoundType.GridMove, 0.25f);
 			yield return t.WaitForCompletion();
 
 			LevelManager.Instance.DecideRounds();

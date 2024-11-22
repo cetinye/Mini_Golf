@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Cinemachine;
 using UnityEngine;
@@ -94,6 +95,8 @@ namespace MiniGolf
 
 		public void StartGame()
 		{
+			AudioManager.Instance.Play(SoundType.Background);
+
 			gridController.AssignVariables();
 			gridController.Create();
 		}
@@ -106,6 +109,7 @@ namespace MiniGolf
 				totalCorrectCount++;
 
 				uiManager.SetCorrectText(totalCorrectCount);
+				AudioManager.Instance.PlayOneShot(SoundType.Success);
 			}
 			else
 			{
@@ -113,6 +117,7 @@ namespace MiniGolf
 				totalWrongCount++;
 
 				uiManager.SetWrongText(totalWrongCount);
+				AudioManager.Instance.PlayOneShot(SoundType.Fail);
 			}
 
 			DecideLevel();
@@ -171,6 +176,7 @@ namespace MiniGolf
 		}
 	}
 
+	[Serializable]
 	public enum GameState
 	{
 		Idle,

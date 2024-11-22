@@ -84,6 +84,8 @@ namespace MiniGolf
 			yield return new WaitForSeconds(0.75f);
 			golfClub.DOLocalRotate(new Vector3(0, 0, 6), 0.125f);
 			yield return new WaitForSeconds(0.125f);
+			AudioManager.Instance.PlayOneShot(SoundType.BallHit);
+			Taptic.Success();
 			golfClub.gameObject.SetActive(false);
 			yield return Move();
 		}
@@ -91,6 +93,7 @@ namespace MiniGolf
 		private IEnumerator Move()
 		{
 			DecideOnDirection();
+			MoveBallOnDirection();
 
 			Vector3 targetPosition = new Vector3(
 				gridController.grid[x, z].transform.position.x,
@@ -107,6 +110,8 @@ namespace MiniGolf
 			if (x == 0 || z == 0 || x == gridController.gridWidth - 1 || z == gridController.gridHeight - 1)
 			{
 				Debug.Log("Ball reached end of grid");
+				AudioManager.Instance.PlayOneShot(SoundType.HoleEnter);
+				Taptic.Success();
 				Tween t = transform.DOMoveY(0, 0.5f);
 				yield return t.WaitForCompletion();
 
@@ -127,15 +132,21 @@ namespace MiniGolf
 			// Check for obstacles or pipes
 			if (gridController.grid[x, z].TryGetComponent(out Obstacle obstacle))
 			{
+				AudioManager.Instance.PlayFrom(SoundType.ObstacleHit, 0.225f);
+				Taptic.Success();
 				direction = obstacle.GetDirection(direction);
 			}
 			else if (gridController.grid[x, z].TryGetComponent(out Pipe pipe) && pipe.enterDirection == direction)
 			{
+				Taptic.Success();
+				AudioManager.Instance.PlayFrom(SoundType.PipeEnter, 0.2f);
 				pipe.BallEnter(this);
 				SetMeshRendererState(false, true);
 				SetBallPosition(x, z);
 				yield return new WaitForSeconds(1f);
 				SetMeshRendererState(true);
+				Taptic.Success();
+				AudioManager.Instance.PlayFrom(SoundType.PipeExit, 0.18f);
 			}
 
 			// Recursively call Move
@@ -158,6 +169,7 @@ namespace MiniGolf
 					{
 						if (LevelManager.Instance.GameState == GameState.Preview)
 						{
+							AudioManager.Instance.PlayOneShot(SoundType.ReadyToPlay);
 							LevelManager.Instance.GameState = GameState.Playing;
 						}
 					});
@@ -187,7 +199,10 @@ namespace MiniGolf
 				direction = Direction.LEFT;
 			else if (z == gridController.gridHeight - 1 && x != gridController.gridWidth - 1)
 				direction = Direction.DOWN;
+		}
 
+		public void MoveBallOnDirection()
+		{
 			// Move ball in the chosen direction
 			switch (direction)
 			{
