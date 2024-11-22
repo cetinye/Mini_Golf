@@ -79,7 +79,7 @@ namespace MiniGolf
 
 		private void AssignLevel()
 		{
-			levelId = PlayerPrefs.GetInt("MiniGolf_Level", 1);
+			// levelId = PlayerPrefs.GetInt("MiniGolf_Level", 1);
 			levelId = Mathf.Clamp(levelId, 1, levels.Count);
 			LevelSO = levels[levelId - 1];
 

@@ -16,13 +16,13 @@ MonoBehaviour:
   gridSizeX: 6
   gridSizeY: 6
   numOfObstacles: 2
-  rateOfFakeObstacles: 20
+  rateOfFakeObstacles: 5
   numOfFakeObstacles: 2
   numOfPipe: 0
   numOfFakePipe: 0
   previewTime: 3
   answerTime: 8
-  levelUpCriteria: 1
+  levelUpCriteria: 2
   levelDownCriteria: 1
   totalNumOfQuestions: 5
   pointsPerCorrect: 100

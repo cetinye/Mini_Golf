@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using DG.Tweening;
 
 namespace MiniGolf
 {
@@ -15,9 +16,10 @@ namespace MiniGolf
 
 			isFlagSet = true;
 			Debug.Log("Clicked Hole [" + x + " " + z + "]");
-			Instantiate(flagPref, transform);
-
-			FlagPlaced?.Invoke(x, z);
+			GameObject flag = Instantiate(flagPref, transform);
+			float startPos = flag.transform.localPosition.y;
+			flag.transform.localPosition = new Vector3(flag.transform.localPosition.x, transform.localPosition.y + 5, flag.transform.localPosition.z);
+			flag.transform.DOLocalMoveY(startPos, 0.25f).OnComplete(() => FlagPlaced?.Invoke(x, z));
 		}
 	}
 }

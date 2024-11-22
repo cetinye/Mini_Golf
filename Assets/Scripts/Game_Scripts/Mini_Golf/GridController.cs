@@ -131,12 +131,23 @@ namespace MiniGolf
 
 		IEnumerator DeleteGrid()
 		{
-			StopCoroutine(spawnPathObstacles);
-			StopCoroutine(spawnObstaclesRoutine);
-			StopCoroutine(spawnPipesRoutine);
-			spawnPathObstacles = null;
-			spawnObstaclesRoutine = null;
-			spawnPipesRoutine = null;
+			if (spawnObstaclesRoutine != null)
+			{
+				StopCoroutine(spawnObstaclesRoutine);
+				spawnObstaclesRoutine = null;
+			}
+
+			if (spawnPipesRoutine != null)
+			{
+				StopCoroutine(spawnPipesRoutine);
+				spawnPipesRoutine = null;
+			}
+
+			if (spawnPathObstacles != null)
+			{
+				StopCoroutine(spawnPathObstacles);
+				spawnPathObstacles = null;
+			}
 
 			for (var i = 0; i < gridWidth; i++)
 			{
@@ -177,6 +188,8 @@ namespace MiniGolf
 			decoratedBlocks.Clear();
 			lastIndex = 0;
 			pipeColorIdx = 0;
+			hitObstacleCount = 0;
+			hitPipeCount = 0;
 			Destroy(spawnedBall.gameObject);
 
 			AssignVariables();
@@ -285,6 +298,14 @@ namespace MiniGolf
 				CalculateBallPath();
 			}
 
+			// Ensure path has given num of obstacles and pipes
+			if (hitObstacleCount != obstacleCount || hitPipeCount != pipeCount)
+			{
+				StopAllCoroutines();
+				StartCoroutine(DeleteGrid());
+				yield break;
+			}
+
 			DisableCorners();
 			SpawnFakeObstacles();
 			SpawnFakePipes();
@@ -359,7 +380,8 @@ namespace MiniGolf
 
 		private void SpawnDecorations()
 		{
-			for (int i = 0; i < gridWidth * gridHeight * rateOfFakeObstacles / 100f; i++)
+			int numOfDecor = Mathf.CeilToInt(gridWidth * gridHeight * rateOfFakeObstacles / 100f);
+			for (int i = 0; i < numOfDecor; i++)
 			{
 				Block blockToReplace = GetEmptyBlock();
 
@@ -512,6 +534,9 @@ namespace MiniGolf
 		private void CalculateBallPath()
 		{
 			int tries = 0;
+			int pathPipeCount = 0;
+			hitObstacleCount = 0;
+			hitPipeCount = 0;
 			path.Clear();
 
 			if (tempBall == null)
@@ -616,8 +641,10 @@ namespace MiniGolf
 				// Avoid entering the same pipe in the same direction repeatedly
 				if (grid[tempBall.x, tempBall.z].TryGetComponent(out Pipe p))
 				{
+					pathPipeCount++;
+
 					// Check for not enterable pipe spawned on path 
-					if (p.enterDirection != tempBall.direction)
+					if (pathPipeCount % 2 == 1 && p.enterDirection != tempBall.direction)
 					{
 						Debug.LogError("Not enterable pipe spawned on path.");
 						StopAllCoroutines();
@@ -627,8 +654,6 @@ namespace MiniGolf
 
 					if (p.enterDirection == tempBall.direction)
 					{
-						hitPipeCount++;
-
 						// Check if we are about to enter a loop through the pipe
 						if (visited.Contains((tempBall.x, tempBall.z, tempBall.direction)))
 						{
@@ -638,7 +663,10 @@ namespace MiniGolf
 							return;
 						}
 
+						path.Add(grid[tempBall.x, tempBall.z]);
+						grid[tempBall.x, tempBall.z].incomingBallDirection = tempBall.direction;
 						p.BallEnter(tempBall);
+						hitPipeCount++;
 						continue;
 					}
 				}
@@ -647,14 +675,6 @@ namespace MiniGolf
 				if (++tries >= 100)
 				{
 					Debug.LogError("Failed to find path or possible infinite loop detected after maximum tries.");
-					StopAllCoroutines();
-					StartCoroutine(DeleteGrid());
-					return;
-				}
-
-				// Ensure path has given num of obstacles and pipes
-				if (hitObstacleCount != obstacleCount && hitPipeCount != pipeCount)
-				{
 					StopAllCoroutines();
 					StartCoroutine(DeleteGrid());
 					return;
@@ -814,6 +834,8 @@ namespace MiniGolf
 			yield return new WaitForSeconds(previewTime + 0.5f);
 
 			SetObstacleVisibility(false);
+			yield return new WaitForSeconds(0.5f);
+
 			SwitchBallStartBlock();
 			spawnedBall.SetMeshRendererState(true);
 		}

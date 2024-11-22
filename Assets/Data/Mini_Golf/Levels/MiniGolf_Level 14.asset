@@ -15,8 +15,8 @@ MonoBehaviour:
   levelId: 14
   gridSizeX: 7
   gridSizeY: 7
-  numOfObstacles: 5
-  rateOfFakeObstacles: 30
+  numOfObstacles: 4
+  rateOfFakeObstacles: 10
   numOfFakeObstacles: 2
   numOfPipe: 1
   numOfFakePipe: 0
