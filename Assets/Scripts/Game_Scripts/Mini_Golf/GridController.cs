@@ -31,6 +31,7 @@ namespace MiniGolf
 		[SerializeField] private List<Color> pipeColors = new List<Color>();
 		[SerializeField] private List<Block> path = new List<Block>();
 		[SerializeField] private List<Block> decoratedBlocks = new List<Block>();
+		private List<ObstacleTypes> obstaclesToSpawn = new List<ObstacleTypes>();
 
 		[Header("Models")]
 		[SerializeField] private Ball ball;
@@ -54,8 +55,6 @@ namespace MiniGolf
 		[SerializeField] private AnimationCurve moveAnimCurve;
 
 		IEnumerator spawnPathObstacles;
-		IEnumerator spawnObstaclesRoutine;
-		IEnumerator spawnPipesRoutine;
 
 		public void Restart()
 		{
@@ -96,6 +95,7 @@ namespace MiniGolf
 			InitializeGrid();
 			ChooseBallSpawnPoint();
 			CalculateBallPath();
+			PrepareObstacleList();
 
 			if (spawnPathObstacles != null)
 			{
@@ -111,38 +111,108 @@ namespace MiniGolf
 
 		IEnumerator SpawnPathObstacles()
 		{
-			if (spawnObstaclesRoutine != null)
+			for (int i = 0; i < obstaclesToSpawn.Count; i++)
 			{
-				StopCoroutine(spawnObstaclesRoutine);
-				spawnObstaclesRoutine = null;
+				if (obstaclesToSpawn[i].Equals(ObstacleTypes.Obstacle))
+				{
+					Block b = GetPathBlock();
+
+					// if not available then delete grid
+					if (b == null)
+					{
+						yield return DeleteGrid();
+					}
+
+					destroyList.Add(b.gameObject);
+
+					SetObstacle(b.x, b.z, (Rotation)Random.Range(0, 2));
+					CalculateBallPath();
+				}
+				else if (obstaclesToSpawn[i].Equals(ObstacleTypes.Pipe))
+				{
+					Block b1 = GetPathBlock();
+
+					// if not available then delete grid
+					if (b1 == null)
+					{
+						yield return DeleteGrid();
+					}
+
+					if (destroyList == null)
+						yield return null;
+
+					destroyList.Add(b1.gameObject);
+
+					Pipe p1 = SetPipe(b1.x, b1.z, GetOppositeDirection(b1.incomingBallDirection), pipeColors[pipeColorIdx]);
+					destroyList.Add(p1.gameObject);
+					p1.IsPipe = true;
+
+					Direction selectedDirForP2 = (Direction)Random.Range(0, 4);
+					Block b2 = GetEmptyBlock(selectedDirForP2);
+
+					// if not available then delete grid
+					if (b2 == null)
+					{
+						yield return DeleteGrid();
+					}
+
+					destroyList.Add(b2.gameObject);
+
+					Pipe p2 = SetPipe(b2.x, b2.z, selectedDirForP2, pipeColors[pipeColorIdx]);
+					destroyList.Add(p2.gameObject);
+					p2.IsPipe = true;
+
+					ConnectPipes(p1, p2);
+					pipeColorIdx++;
+
+					CalculateBallPath();
+				}
 			}
 
-			if (spawnPipesRoutine != null)
+			// Ensure path has given num of obstacles and pipes
+			if (hitObstacleCount != obstacleCount || hitPipeCount != pipeCount)
 			{
-				StopCoroutine(spawnPipesRoutine);
-				spawnPipesRoutine = null;
+				StopAllCoroutines();
+				StartCoroutine(DeleteGrid());
+				yield break;
 			}
 
-			spawnObstaclesRoutine = SpawnObstacles(obstacleCount);
-			spawnPipesRoutine = SpawnPipes(pipeCount);
+			DisableCorners();
+			SpawnFakeObstacles();
+			SpawnFakePipes();
+			SpawnDecorations();
 
-			yield return spawnObstaclesRoutine;
+			SetGridVisibility(false);
+
+			Debug.Log("Path ends at [" + lastBlock.x + "," + lastBlock.z + "]");
+
+			yield return new WaitForEndOfFrame();
+			virtualCamera.enabled = true;
+			yield return new WaitForEndOfFrame();
+			virtualCamera.enabled = false;
+
+			gridTransform.localPosition = right.transform.localPosition;
+
+			yield return MoveGridIn();
+		}
+
+		private void PrepareObstacleList()
+		{
+			for (int i = 0; i < obstacleCount; i++)
+			{
+				obstaclesToSpawn.Add(ObstacleTypes.Obstacle);
+			}
+
+			for (int i = 0; i < pipeCount; i++)
+			{
+				obstaclesToSpawn.Add(ObstacleTypes.Pipe);
+			}
+
+			obstaclesToSpawn.Shuffle();
 		}
 
 		IEnumerator DeleteGrid()
 		{
-			if (spawnObstaclesRoutine != null)
-			{
-				StopCoroutine(spawnObstaclesRoutine);
-				spawnObstaclesRoutine = null;
-			}
-
-			if (spawnPipesRoutine != null)
-			{
-				StopCoroutine(spawnPipesRoutine);
-				spawnPipesRoutine = null;
-			}
-
 			if (spawnPathObstacles != null)
 			{
 				StopCoroutine(spawnPathObstacles);
@@ -182,6 +252,7 @@ namespace MiniGolf
 			}
 
 			destroyList.Clear();
+			obstaclesToSpawn.Clear();
 			Hole.isFlagSet = false;
 			grid = null;
 			path.Clear();
@@ -233,96 +304,6 @@ namespace MiniGolf
 				xPos += tileSize;
 				zPos = 0;
 			}
-		}
-
-		IEnumerator SpawnObstacles(int obstacleCount)
-		{
-			for (int i = 0; i < obstacleCount; i++)
-			{
-				Block b = GetPathBlock();
-
-				// if not available then delete grid
-				if (b == null)
-				{
-					yield return DeleteGrid();
-				}
-
-				destroyList.Add(b.gameObject);
-
-				SetObstacle(b.x, b.z, (Rotation)Random.Range(0, 2));
-				CalculateBallPath();
-			}
-
-			yield return spawnPipesRoutine;
-		}
-
-		IEnumerator SpawnPipes(int pipeCount)
-		{
-			for (int i = 0; i < pipeCount; i++)
-			{
-				Block b1 = GetPathBlock();
-
-				// if not available then delete grid
-				if (b1 == null)
-				{
-					yield return DeleteGrid();
-				}
-
-				if (destroyList == null)
-					yield return null;
-
-				destroyList.Add(b1.gameObject);
-
-				Pipe p1 = SetPipe(b1.x, b1.z, GetOppositeDirection(b1.incomingBallDirection), pipeColors[pipeColorIdx]);
-				destroyList.Add(p1.gameObject);
-				p1.IsPipe = true;
-
-				Direction selectedDirForP2 = (Direction)Random.Range(0, 4);
-				Block b2 = GetEmptyBlock(selectedDirForP2);
-
-				// if not available then delete grid
-				if (b2 == null)
-				{
-					yield return DeleteGrid();
-				}
-
-				destroyList.Add(b2.gameObject);
-
-				Pipe p2 = SetPipe(b2.x, b2.z, selectedDirForP2, pipeColors[pipeColorIdx]);
-				destroyList.Add(p2.gameObject);
-				p2.IsPipe = true;
-
-				ConnectPipes(p1, p2);
-				pipeColorIdx++;
-
-				CalculateBallPath();
-			}
-
-			// Ensure path has given num of obstacles and pipes
-			if (hitObstacleCount != obstacleCount || hitPipeCount != pipeCount)
-			{
-				StopAllCoroutines();
-				StartCoroutine(DeleteGrid());
-				yield break;
-			}
-
-			DisableCorners();
-			SpawnFakeObstacles();
-			SpawnFakePipes();
-			SpawnDecorations();
-
-			SetGridVisibility(false);
-
-			Debug.Log("Path ends at [" + lastBlock.x + "," + lastBlock.z + "]");
-
-			yield return new WaitForEndOfFrame();
-			virtualCamera.enabled = true;
-			yield return new WaitForEndOfFrame();
-			virtualCamera.enabled = false;
-
-			gridTransform.localPosition = right.transform.localPosition;
-
-			yield return MoveGridIn();
 		}
 
 		private void SpawnFakeObstacles()
@@ -855,6 +836,31 @@ namespace MiniGolf
 			LevelManager.Instance.DecideRounds();
 
 			yield return null;
+		}
+	}
+
+	public enum ObstacleTypes
+	{
+		Obstacle,
+		Pipe,
+	}
+
+	public static class IListExtensions
+	{
+		/// <summary>
+		/// Shuffles the element order of the specified list.
+		/// </summary>
+		public static void Shuffle<T>(this IList<T> ts)
+		{
+			var count = ts.Count;
+			var last = count - 1;
+			for (var i = 0; i < last; ++i)
+			{
+				var r = UnityEngine.Random.Range(i, count);
+				var tmp = ts[i];
+				ts[i] = ts[r];
+				ts[r] = tmp;
+			}
 		}
 	}
 }
